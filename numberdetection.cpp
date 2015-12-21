@@ -5,17 +5,43 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     cv::Mat blurredImage;
     cv::Mat hsv;
     cv::Mat final;
-    GaussianBlur(image, blurredImage, cv::Size(1, 1), 0, 0);
+    GaussianBlur(image, blurredImage, cv::Size(3, 3), 0, 0);
     cvtColor(blurredImage, hsv, CV_BGR2HSV);
     cvtColor(image, final, CV_BGR2GRAY);
 
     cv::Mat colorSeg;
-    pyrMeanShiftFiltering(blurredImage, colorSeg, 20, 20, 3);
+    pyrMeanShiftFiltering(blurredImage, colorSeg, 10, 18, 3);
 
     cv::Mat colorSegHSV;
     cvtColor(colorSeg, colorSegHSV, CV_BGR2HSV);
 
-    int maxV = 0;
+    //cv::imshow("Hello", colorSeg);
+    //cv::waitKey(40000 );
+
+    cv::Mat imageLab;
+    cvtColor(colorSeg, imageLab, CV_BGR2Lab);
+
+    cv::Scalar mean = cv::mean(imageLab);
+
+    cv::Mat saliency;
+    cvtColor(image, saliency, CV_BGR2GRAY);
+
+    for (int x = 0; x < imageLab.cols; x++){
+        for (int y = 0; y < imageLab.rows; y++){
+            cv::Vec3b intensity = imageLab.at<cv::Vec3b>(y, x);
+            uchar value = sqrt(pow((intensity[0] - mean[0]),2) + pow((intensity[1] - mean[1]),2) + pow((intensity[2] - mean[2]),2));
+            saliency.at<uchar>(y, x) = value;
+
+            if (value > 30){
+                final.at<uchar>(y, x) = 255;
+            }
+            else {
+                final.at<uchar>(y, x) = 0;
+            }
+        }
+    }
+
+    /*int maxV = 0;
     int maxS = 0;
     long meanV = 0;
     long meanS = 0;
@@ -50,11 +76,11 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
                 final.at<uchar>(y, x) = 0;
             }
         }
-    }
+    }*/
 
 
-    //cv::imshow("Output", final);
-    //cv::waitKey(40000);
+    cv::imshow("Output", colorSeg);
+    cv::waitKey(40000);
 
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -217,25 +243,25 @@ void runOnDataSet(QList<int> digitsOnField){
     int success = 0;
     int fail = 0;
 
-    for (int i = 0; i < 10; i++){
-        for (int j = 0; j <= 10; j++){
-            cv::Mat image = cv::imread(QString("temp/dataset/" + QString::number(i) + "/" + QString::number(j) + ".png").toStdString());
+    for (int i = 0; i < 13; i++){
+        if (i != 0 && i != 1 && i != 2 && i != 3 && i != 4 && i != 7 && i != 10 && i != 11){
+            for (int j = 0; j <= 9; j++){
+                cv::Mat image = cv::imread(QString("temp/dataset/" + QString::number(i) + "/" + QString::number(j) + ".png").toStdString());
 
-            qDebug() << i << j;
+                qDebug() << i << j;
 
-            if (i!=3 && i!=4 && i!=7){ // no dataset for these
                 int num = mostProbableNumber(image, digitsOnField);
                 if (num == i){
                     success++;
-                    qDebug() << "Success !";
+                    qDebug() << "Success !" << num;
                 }
                 else {
                     fail++;
                     qDebug() << "Failure !" << num;
                 }
-            }
 
-            image.release();
+                image.release();
+            }
         }
     }
 

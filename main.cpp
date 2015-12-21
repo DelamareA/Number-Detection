@@ -32,6 +32,9 @@ int main(int argc, char *argv[]){
 
     // Below is the code to generate the datasets to train the svms
 
+    generateJerseySVM("svm/green/");
+    generateJerseySVM("svm/red/");
+
     /*QList<int> all;
     for (int i = 0; i < 10; i++){
         all.push_back(i);
@@ -139,9 +142,9 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
 
     Skeleton::setMachines(machines);
 
-    //runOnDataSet(possibleDigits);
+    runOnDataSet(possibleDigits);
 
-    if (isVideo){
+    /*if (isVideo){
         cv::VideoCapture inputVideo(videoPath.toStdString());
         if (!inputVideo.isOpened()){
             qDebug() << "Could not open video";
@@ -177,7 +180,7 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
 
             qDebug() << "Start frame : " << frameCount;
 
-            imwrite("test.png", image);
+            imwrite("test.png", image );
 
             out = basicTemplateMatching(image, background, possibleDigits);
             outputVideo << out->getImage();
@@ -221,7 +224,7 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
         cv::waitKey(40000);
 
         delete out;
-    }
+    }*/
 
     return 0;
 }

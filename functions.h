@@ -36,6 +36,7 @@ void thinningGuoHallIteration(cv::Mat& im, int iter);
 
 void generateDataSet(QList<int> numbers, int countPerNumber, int width, int height, QString outputPath);
 void generateSVM(QString path, int type);
+void generateJerseySVM(QString path);
 
 int mostProbableNumber(cv::Mat image, QList<int> digitsOnField);
 int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector<cv::Point> contour);
