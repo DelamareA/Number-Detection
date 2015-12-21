@@ -7,11 +7,19 @@
 #include <QDebug>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
 
 #define CONFIG_LINES_COUNT 8
 
+struct JerseyMachines{
+    cv::Ptr<cv::ml::SVM> m[2];
+};
+
 class Configuration {
     public:
+        static JerseyMachines jerseyMachines;
+
         static void setConfigFromFile(QString path);
         static cv::Vec3b getNumberColor();
         static cv::Vec3b getGreenColor();

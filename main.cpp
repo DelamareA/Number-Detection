@@ -32,8 +32,8 @@ int main(int argc, char *argv[]){
 
     // Below is the code to generate the datasets to train the svms
 
-    generateJerseySVM("svm/green/");
-    generateJerseySVM("svm/red/");
+    //generateJerseySVM("svm/green/");
+    //generateJerseySVM("svm/red/");
 
     /*QList<int> all;
     for (int i = 0; i < 10; i++){

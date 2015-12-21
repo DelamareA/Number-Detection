@@ -217,8 +217,6 @@ void generateJerseySVM(QString path){
         }
     }
 
-    qDebug() << trainingDataVector.size();
-
     float labels[labelsVector.size()];
     float trainingData[trainingDataVector.size()][dim];
 

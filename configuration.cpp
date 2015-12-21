@@ -9,6 +9,8 @@ int Configuration::maxRedColorDistance = 0;
 int Configuration::minDistanceBetweenNumbers = 0;
 int Configuration::maxBackgroundColorDistance = 0;
 
+JerseyMachines Configuration::jerseyMachines;
+
 Configuration::Configuration(){
 }
 
@@ -61,6 +63,9 @@ void Configuration::setConfigFromFile(QString path){
     else {
         qDebug() << "Cannot open " + path;
     }
+
+    jerseyMachines.m[0] = cv::ml::SVM::load<cv::ml::SVM>(QString("svm/green/svm.xml").toStdString());
+    jerseyMachines.m[1] = cv::ml::SVM::load<cv::ml::SVM>(QString("svm/red/svm.xml").toStdString());
 }
 
 cv::Vec3b Configuration::getNumberColor(){

@@ -5,7 +5,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <QList>
 
-#include "template.h"
 #include "functions.h"
 
 #define MERGE_DISTANCE 0.05
@@ -86,8 +85,6 @@ class Skeleton {
         cv::Point2d massCenter;
         double total;
         double parts[PART_X][PART_Y];
-
-
 };
 
 #endif // SKELETON_H
