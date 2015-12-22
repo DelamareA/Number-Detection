@@ -9,23 +9,25 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     cv::Mat hsv;
     cv::Mat final;
     cv::Mat jerseyFinal;
-    GaussianBlur(image, blurredImage, cv::Size(3, 3), 0, 0);
+    GaussianBlur(image, blurredImage, cv::Size(1, 1), 0, 0);
     cvtColor(blurredImage, hsv, CV_BGR2HSV);
     cvtColor(image, jerseyFinal, CV_BGR2GRAY);
     cvtColor(image, final, CV_BGR2GRAY);
 
     cv::Mat colorSeg;
-    pyrMeanShiftFiltering(blurredImage, colorSeg, 10, 18, 1);
+    pyrMeanShiftFiltering(blurredImage, colorSeg, 10, 30, 1);
 
     cv::Mat colorSegHSV;
     cvtColor(colorSeg, colorSegHSV, CV_BGR2HSV);
 
     int histo[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
+    int widerHisto[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
 
     for (int i = 0; i < 255 / BIN_SIZE; i++){
         for (int j = 0; j < 255 / BIN_SIZE; j++){
             for (int k = 0; k < 255 / BIN_SIZE; k++){
                 histo[i][j][k] = 0;
+                widerHisto[i][j][k] = 0;
             }
         }
     }
@@ -45,13 +47,28 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
 
     meanV /= (image.cols * image.rows);
 
+    for (int i = 1; i < 255 / BIN_SIZE - 1; i++){
+        for (int j = 1; j < 255 / BIN_SIZE - 1; j++){
+            for (int k = 1; k < 255 / BIN_SIZE - 1; k++){
+
+                for (int i2 = -1; i2 <= 1; i2++){
+                    for (int j2 = -1; j2 <= 1; j2++){
+                        for (int k2 = -1; k2 <= 1; k2++){
+                            widerHisto[i][j][k] += histo[i + i2][j + j2][k + k2];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     int maxH = 0;
     int maxS = 0;
     int maxV = 0;
     int maxVote = 0;
     for (int i = 0; i < 255 / BIN_SIZE; i++){
         for (int j = 0; j < 255 / BIN_SIZE; j++){
-            for (int k = 0; k < 255 / BIN_SIZE && k < meanV/BIN_SIZE; k++){
+            for (int k = 0; k < 255 / BIN_SIZE && k < (meanV + 20)/BIN_SIZE; k++){
                 if (histo[i][j][k] > maxVote){
                     maxVote = histo[i][j][k];
                     maxH = i * BIN_SIZE + BIN_SIZE / 2;
@@ -65,6 +82,7 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         }
     }
 
+    qDebug() << "Vote : " << maxVote;
     qDebug() << maxH * 360 / 255 << maxS * 100 / 255 << maxV * 100 / 255;
 
     double s = 1.7;
@@ -103,11 +121,17 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
             }
         }
 
+        std::vector<cv::Point> approximateContour;
+
+        cv::approxPolyDP(cv::Mat(trueJerseyContour), approximateContour, 3, true );
+
         std::vector<cv::Vec4i> defect;
         std::vector<int> hull;
 
-        cv::convexHull(trueJerseyContour, hull, false);
-        cv::convexityDefects(trueJerseyContour, hull, defect);
+        std::vector<cv::Point> convexContour;
+
+        cv::convexHull(trueJerseyContour, convexContour, false, true);
+        //cv::convexityDefects(trueJerseyContour, convexHull, defect);
 
         std::vector<cv::Point> convexJerseyContour;
         for (int i = 0; i < defect.size(); i++){
@@ -115,22 +139,25 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
             convexJerseyContour.push_back(trueJerseyContour[defect[i][1]]);
         }
 
-        std::vector<std::vector<cv::Point> > temp;
-        temp.push_back(convexJerseyContour);
-
-        cv::Scalar color = cv::Scalar(0, 0, 255);
-        cv::drawContours(image, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-
         if (convexJerseyContour.size() == 0){
             convexJerseyContour = trueJerseyContour;
         }
+        else {
+            convexJerseyContour.push_back(trueJerseyContour[defect[defect.size()-1][1]]);
+        }
+
+        std::vector<std::vector<cv::Point> > temp;
+        temp.push_back(convexContour);
+
+        cv::Scalar color = cv::Scalar(0, 0, 255);
+        cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
 
         for (int x = 0; x < jerseyFinal.cols; x++){
             for (int y = 0; y < jerseyFinal.rows; y++){
                 if (jerseyFinal.at<uchar>(y, x) == 255){
                     final.at<uchar>(y, x) = 0;
                 }
-                else if (pointPolygonTest(convexJerseyContour, cv::Point2f(x,y), true) >= 0){
+                else if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4){
                     final.at<uchar>(y, x) = 255;
                 }
                 else {
@@ -241,8 +268,8 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     }*/
 
 
-    cv::imshow("Output", final);
-    cv::waitKey(40000);
+    //cv::imshow("Output", final);
+    //cv::waitKey(40000);
 
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;

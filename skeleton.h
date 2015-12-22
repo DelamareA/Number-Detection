@@ -12,8 +12,8 @@
 #define FAKE_LOOPS_DISTANCE 0.15
 #define JUNCTION_MARGIN 0.05
 
-#define PART_X 7
-#define PART_Y 7
+#define PART_X 10
+#define PART_Y 10
 
 #define END_0 0
 #define END_1 1
@@ -21,13 +21,13 @@
 #define JUNCTION_0 0
 #define JUNCTION_1 0
 
-#define HOLE_0 2
+#define HOLE_0 0
 #define HOLE_1 0
 
 #define MASS_CENTER_0 0
 #define MASS_CENTER_1 0
 
-#define TOTAL_0 1100
+#define TOTAL_0 10000
 #define TOTAL_1 0
 
 #define PARTS_0 1
