@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
     //generateJerseySVM("svm/green/");
     //generateJerseySVM("svm/red/");
 
-    QList<int> all;
+    /*QList<int> all;
     for (int i = 0; i < 10; i++){
         all.push_back(i);
     }
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
             generateDataSet(numbers, 1, 36, 45, "svm/" + QString::number(i) + "-" + QString::number(j) + "/");
             generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", M0);
         }
-    }
+    }*/
 
 
     /*QList<int> zeroHole;
