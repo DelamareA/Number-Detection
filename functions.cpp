@@ -61,7 +61,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
         if (rect.width > 40 && rect.height > 50){
 
             rect.y += rect.height * 0.2;
-            rect.height *= 0.3;
+            rect.height *= 0.4;
 
             if (rect.x < 0){
                 rect.x = 0;
@@ -93,7 +93,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     black[0] = 0;
     black[1] = 0;
     black[2] = 0;
-    /*for (int x = 0; x < backgroundFilteredImage.cols; x++){
+    for (int x = 0; x < backgroundFilteredImage.cols; x++){
         for (int y = 0; y < backgroundFilteredImage.rows; y++){
             if (backgroundMask2.at<uchar>(y, x) == 255){
                 backgroundFilteredImage.at<uchar>(y, x) = 0;
@@ -109,7 +109,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
                 backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
             }
         }
-    }*/
+    }
 
     for (int i = 0; i < listPlayerImages.size(); i++){
         for (int x = backgroundFilteredRects[i].x; x < backgroundFilteredRects[i].x + backgroundFilteredRects[i].width; x++){
@@ -124,8 +124,8 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
                 }
             }
         }
-        //cv::imshow("Output", listPlayerImages[i]);
-        //cv::waitKey(40000);
+//        cv::imshow("Output", listPlayerImages[i]);
+//        cv::waitKey(40000);
     }
 
     Output* output = new Output(image);
@@ -135,10 +135,10 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     for (int i = 0; i < listPlayerImages.size(); i++){
         listPlayerImagesNumbers.push_back(listPlayerImages[i].clone());
 
-        int num = mostProbableNumber(listPlayerImages[i].clone(), digitsOnField);
+        NumPos num = mostProbableNumber(listPlayerImages[i].clone(), digitsOnField);
 
-        if (num != -1){
-            output->addData(backgroundFilteredRects[i].x + backgroundFilteredRects[i].width/2, backgroundFilteredRects[i].y + backgroundFilteredRects[i].height/2, num);
+        if (num.number != -1){
+            output->addData(backgroundFilteredRects[i].x + num.pos.x, backgroundFilteredRects[i].y + num.pos.y, num.number);
         }
 
         //output->addData(backgroundFilteredRects[i].x, backgroundFilteredRects[i].y, mostProbableDigit(listPlayerImages[i].clone(), digitsOnField));

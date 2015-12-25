@@ -16,6 +16,11 @@
 
 enum {TEMPLATE_MATCHING, CENTER_MASS, HALVES_CENTER_MASS_VERTI, HALVES_CENTER_MASS_HORI, HISTOGRAMS};
 
+struct NumPos {
+    int number;
+    cv::Point2i pos;
+};
+
 Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat background, QList<int> digitsOnField);
 
 Output* basicTemplateMatching(cv::Mat image, cv::Mat background, QList<int> digitsOnField);
@@ -38,7 +43,7 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 void generateSVM(QString path, int type);
 void generateJerseySVM(QString path);
 
-int mostProbableNumber(cv::Mat image, QList<int> digitsOnField);
+NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField);
 int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector<cv::Point> contour);
 int digitHelper(cv::Mat bigImage, QList<int> digitsOnField, std::vector<cv::Point> contour, cv::Rect rect);
 void runOnDataSet(QList<int> digitsOnField);

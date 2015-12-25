@@ -34,11 +34,13 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
             QPainter painter(&pix);
             painter.setPen(QColor(255, 255, 255));
 
-            painter.setFont(QFont("Arial", size));
+            QFont font("Arial", size);
+            font.setBold(true);
+            painter.setFont(font);
 
             painter.translate(width, size);
-            //double realAngle = (rand() % 100) - 50;
-            //painter.rotate(realAngle);
+            double realAngle = (rand() % 10) - 5;
+            painter.rotate(realAngle);
             painter.drawText(QPoint(0, size), QString::number(numbers[i]));
 
             QImage image = pix.toImage();
@@ -153,7 +155,7 @@ void generateSVM(QString path, int type){
     int dim = Skeleton::getDim(type);
 
     float labels[count];
-    float trainingData[count][dim];
+    float* trainingData = new float[count * dim];
 
     for (int i = 0; i < count; i++){
         cv::Mat image;
@@ -171,7 +173,7 @@ void generateSVM(QString path, int type){
 
         labels[i] = labelsString[i+1].toInt();
         for (int j = 0; j < dim; j++){
-            trainingData[i][j] = 2 * vect[j] - 1;
+            trainingData[i * dim + j] = 2 * vect[j] - 1;
         }
     }
     Mat labelsMat(count, 1, CV_32SC1, labels);
@@ -187,7 +189,7 @@ void generateSVM(QString path, int type){
     svm->trainAuto(data);
     svm->save((path + "svm.xml").toStdString());
 
-
+    delete trainingData;
 }
 
 void generateJerseySVM(QString path){

@@ -12,7 +12,7 @@
 #define FAKE_LOOPS_DISTANCE 0.15
 #define JUNCTION_MARGIN 0.05
 
-#define PART_X 10
+#define PART_X 7
 #define PART_Y 10
 
 #define END_0 0

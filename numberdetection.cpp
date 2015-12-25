@@ -4,21 +4,20 @@
 
 #define BIN_SIZE 20
 
-int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
+NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     cv::Mat blurredImage;
-    cv::Mat hsv;
+    cv::Mat labImage;
     cv::Mat final;
     cv::Mat jerseyFinal;
     GaussianBlur(image, blurredImage, cv::Size(1, 1), 0, 0);
-    cvtColor(blurredImage, hsv, CV_BGR2HSV);
+    cvtColor(blurredImage, labImage, CV_BGR2Lab);
     cvtColor(image, jerseyFinal, CV_BGR2GRAY);
     cvtColor(image, final, CV_BGR2GRAY);
 
     cv::Mat colorSeg;
-    pyrMeanShiftFiltering(blurredImage, colorSeg, 10, 30, 1);
-
     cv::Mat colorSegHSV;
-    cvtColor(colorSeg, colorSegHSV, CV_BGR2Lab); // change name later
+    pyrMeanShiftFiltering(labImage, colorSegHSV, 20, 20, 1); // change name later
+    cvtColor(colorSegHSV, colorSeg, CV_Lab2BGR);
 
     int histo[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
     int widerHisto[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
@@ -33,19 +32,23 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     }
 
     long meanV = 0;
+    int maxL = 0;
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
             cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
 
-            histo[val[0]/BIN_SIZE][val[1]/BIN_SIZE][val[2]/BIN_SIZE]++;
+            if (val[0]/BIN_SIZE != 0 || val[1]/BIN_SIZE != 128/BIN_SIZE || val[2]/BIN_SIZE != 128/BIN_SIZE){ // black pixels dont count
+                histo[val[0]/BIN_SIZE][val[1]/BIN_SIZE][val[2]/BIN_SIZE]++;
 
-            if (val[0]/BIN_SIZE == 1 && val[1]/BIN_SIZE == 4 && val[2]/BIN_SIZE == 1){
-                qDebug() << x << y << val[0];
+                meanV += val[2];
+
+                if (maxL < val[0]){
+                    maxL = val[0];
+                }
+
+                //qDebug() << "Temp : " << val[0] << val[1] << val[2];
             }
 
-            meanV += val[2];
-
-            //qDebug() << "Temp : " << val[0]/BIN_SIZE * (BIN_SIZE * 360 / 255) << val[1]/BIN_SIZE * (BIN_SIZE * 100 / 255) << val[2]/BIN_SIZE * (BIN_SIZE * 100 / 255);
         }
     }
 
@@ -72,25 +75,25 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     int maxVote = 0;
     for (int i = 0; i < 255 / BIN_SIZE; i++){
         for (int j = 0; j < 255 / BIN_SIZE; j++){
-            for (int k = 0; k < 255 / BIN_SIZE && k < (meanV + 20)/BIN_SIZE; k++){
+            for (int k = 0; k < 255 / BIN_SIZE; k++){
                 if (histo[i][j][k] > maxVote){
                     maxVote = histo[i][j][k];
                     maxH = i * BIN_SIZE + BIN_SIZE / 2;
                     maxS = j * BIN_SIZE + BIN_SIZE / 2;
                     maxV = k * BIN_SIZE + BIN_SIZE / 2;
 
-                    //qDebug() << "Vote : " << maxVote;
-                    //qDebug() << "Temp : " << maxH * (BIN_SIZE * 360 / 255) << maxS * (BIN_SIZE * 100 / 255) << maxV * (BIN_SIZE * 100 / 255);
+//                    qDebug() << "Vote : " << maxVote;
+//                    qDebug() << "Temp : " << maxH * (BIN_SIZE * 360 / 255) << maxS * (BIN_SIZE * 100 / 255) << maxV * (BIN_SIZE * 100 / 255);
                 }
             }
         }
     }
 
-    //qDebug() << "Values : " << maxH * 360 / 255 << maxS * 100 / 255 << maxV * 100 / 255;
+    qDebug() << "Values : " << maxH * 100 / 255 << maxS - 128 << maxV - 128;
     //qDebug() << "Indices : " << (maxH - BIN_SIZE / 2) / BIN_SIZE << (maxS - BIN_SIZE / 2) / BIN_SIZE << (maxV - BIN_SIZE / 2) / BIN_SIZE;
 
-    double th = 1;
-    double ts = 1;
+    double th = 1.3;
+    double ts = 0.5;
     double tv = 1;
 
     if (maxH > 255 - th * BIN_SIZE){
@@ -165,22 +168,26 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         std::vector<std::vector<cv::Point> > temp;
         temp.push_back(convexContour);
 
-        cv::Scalar color = cv::Scalar(0, 0, 255);
-        cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-
         for (int x = 0; x < jerseyFinal.cols; x++){
             for (int y = 0; y < jerseyFinal.rows; y++){
                 if (jerseyFinal.at<uchar>(y, x) == 255){
                     final.at<uchar>(y, x) = 0;
                 }
-                else if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4){
-                    final.at<uchar>(y, x) = 255;
-                }
                 else {
-                    final.at<uchar>(y, x) = 0;
+                    cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
+
+                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] > maxL * 0.2){
+                        final.at<uchar>(y, x) = 255;
+                    }
+                    else {
+                        final.at<uchar>(y, x) = 0;
+                    }
                 }
             }
         }
+
+        cv::Scalar color = cv::Scalar(0, 0, 255);
+        cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
     }
 
     /*for (int x = 0; x < image.cols; x++){
@@ -284,8 +291,8 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     }*/
 
 
-    //cv::imshow("Output", final);
-    //cv::waitKey(40000);
+    cv::imshow("Output", colorSeg);
+    cv::waitKey(40000);
 
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -357,22 +364,35 @@ int mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         finalContours = sortedContours;
     }
 
+    NumPos result;
+
     if (finalContours.size() == 0){
-        return -1;
+        result.number = -1;
+        return result;
     }
     else if (finalContours.size() == 1){
-        return digitHelper(final, digitsOnField, finalContours[0], finalRects[0]);
+        result.number = digitHelper(final, digitsOnField, finalContours[0], finalRects[0]);
+        result.pos.x = finalRects[0].x + finalRects[0].width/2;
+        result.pos.y = finalRects[0].y + finalRects[0].height/2;
+        return result;
     }
     else {
         int digit1 = digitHelper(final, digitsOnField, finalContours[0], finalRects[0]);
         int digit2 = digitHelper(final, digitsOnField, finalContours[1], finalRects[1]);
 
         if (digit1 == 1){
-            return 10 + digit2;
+            result.number = 10 + digit2;
+            result.pos.x = finalRects[0].x + finalRects[0].width/2;
+            result.pos.y = finalRects[0].y + finalRects[0].height/2;
+            return result;
         }
         else {
-            // temporary
-            return digit2;
+            // we return the 2nd digit
+
+            result.number = digit2;
+            result.pos.x = finalRects[1].x + finalRects[1].width/2;
+            result.pos.y = finalRects[1].y + finalRects[1].height/2;
+            return result;
         }
     }
 }
@@ -431,6 +451,9 @@ int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector
     cv::Mat resized;
     cv::resize(cropped, resized, cv::Size(36, 45));
 
+//    cv::imshow("Output", resized);
+//    cv::waitKey(40000);
+
     cv::Mat skeleton = thinningGuoHall(resized);
     Skeleton ske(skeleton, resized);
 
@@ -449,14 +472,14 @@ void runOnDataSet(QList<int> digitsOnField){
     int fail = 0;
     int notFound = 0;
 
-    for (int i = 0; i < 13; i++){
+    for (int i = 0; i < 12; i++){
         if (i != 0 && i != 1 && i != 2 && i != 3 && i != 4 && i != 7 && i != 10 && i != 11){
             for (int j = 0; j <= 9; j++){
                 cv::Mat image = cv::imread(QString("temp/dataset/" + QString::number(i) + "/" + QString::number(j) + ".png").toStdString());
 
                 qDebug() << i << j;
 
-                int num = mostProbableNumber(image, digitsOnField);
+                int num = mostProbableNumber(image, digitsOnField).number;
                 if (num == i){
                     success++;
                     qDebug() << "Success !" << num;
