@@ -6,54 +6,49 @@
 #include "headers.h"
 
 Output* frameProcess(cv::Mat image, cv::Mat background){
-    cv::Mat imageTransformed = image;
     cv::Mat blurredImage;
-    cv::Mat imageHue;
-    cv::Mat backgroundMask1;
-    cv::Mat grayScaleImage;
     cv::Mat blurredBackground;
-    cv::Mat blurredImageHue;
     GaussianBlur(background, blurredBackground, cv::Size(3, 3), 0, 0);
     GaussianBlur(image, blurredImage, cv::Size(3, 3), 0, 0);
-    cvtColor(image, grayScaleImage, CV_BGR2GRAY);
-    cvtColor(image, backgroundMask1, CV_BGR2GRAY);
-    cvtColor(blurredImage, blurredImageHue, CV_BGR2HSV);
-    cvtColor(image, imageHue, CV_BGR2HSV);
 
-    // ------------------
-    // EXTRACT BACKGROUND
-    // ------------------
+    cv::Mat backgroundMask;
+    cvtColor(image, backgroundMask, CV_BGR2GRAY);
+
+    // Extract background
 
     int maxBackgroundColorDistance = Config::getMaxBackgroundColorDistance();
 
-    for (int y = 0; y < backgroundMask1.rows; y++){
+    for (int y = 0; y < image.rows; y++){
         cv::Vec3b* rowImage = blurredImage.ptr<cv::Vec3b>(y);
         cv::Vec3b* rowBackground = blurredBackground.ptr<cv::Vec3b>(y);
-        for (int x = 0; x < backgroundMask1.cols; x++){
+        for (int x = 0; x < image.cols; x++){
 
             if (colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance){
-                backgroundMask1.at<uchar>(y, x) = 0;
+                backgroundMask.at<uchar>(y, x) = 0;
             }
             else {
-                backgroundMask1.at<uchar>(y, x) = 255;
+                backgroundMask.at<uchar>(y, x) = 255;
             }
         }
     }
 
+    // Dilate and erode background
+
+    cv::Mat backgroundMaskDilated;
     int dilateSize = 3;
     cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
-    cv::erode(backgroundMask1, backgroundMask1, dilateElement);
-    cv::dilate(backgroundMask1, backgroundMask1, dilateElement);
+    cv::erode(backgroundMask, backgroundMaskDilated, dilateElement);
+    cv::dilate(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
 
-    cv::dilate(backgroundMask1, backgroundMask1, dilateElement);
-    cv::erode(backgroundMask1, backgroundMask1, dilateElement);
+    cv::dilate(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
+    cv::erode(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
 
-    cv::Mat backgroundMask2 = backgroundMask1;
+    // Find player's countour
 
     std::vector<std::vector<cv::Point> > backgroundContours;
     std::vector<cv::Vec4i> backgroundHierarchy;
 
-    findContours(backgroundMask1.clone(), backgroundContours, backgroundHierarchy, CV_RETR_EXTERNAL , CV_CHAIN_APPROX_NONE);
+    findContours(backgroundMaskDilated.clone(), backgroundContours, backgroundHierarchy, CV_RETR_EXTERNAL , CV_CHAIN_APPROX_NONE);
 
     QList<cv::Rect> backgroundFilteredRects;
     QList<std::vector<cv::Point> > backgroundFilteredContours;
@@ -62,8 +57,6 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
     for (unsigned int i = 0; i < backgroundContours.size(); i++){
         cv::Rect rect = minAreaRect(backgroundContours[i]).boundingRect();
         if (rect.width > 40 && rect.height > 50){
-
-            //qDebug() << rect.y << rect.height;
 
             rect.y += rect.height * 0.2;
             rect.height *= 0.3 * (rect.y / rect.height) / 3.6;
@@ -75,11 +68,11 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
                 rect.y = 0;
             }
 
-            if (rect.x + rect.width > backgroundMask1.cols){
-                rect.x = backgroundMask1.cols - rect.width;
+            if (rect.x + rect.width > backgroundMask.cols){
+                rect.x = backgroundMask.cols - rect.width;
             }
-            if (rect.y + rect.height > backgroundMask1.rows){
-                rect.y = backgroundMask1.rows - rect.height;
+            if (rect.y + rect.height > backgroundMask.rows){
+                rect.y = backgroundMask.rows - rect.height;
             }
 
             backgroundFilteredRects.push_back(rect);
@@ -89,37 +82,39 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
         }
     }
 
-    // just to display the image
-
-//    cv::Mat backgroundFilteredImage = backgroundMask2.clone();
-//    cv::Mat backgroundFilteredImageColor = image.clone();
-
     cv::Vec3b black;
     black[0] = 0;
     black[1] = 0;
     black[2] = 0;
-//    for (int x = 0; x < backgroundFilteredImage.cols; x++){
-//        for (int y = 0; y < backgroundFilteredImage.rows; y++){
-//            if (backgroundMask2.at<uchar>(y, x) == 255){
-//                backgroundFilteredImage.at<uchar>(y, x) = 0;
-//                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
-//                for (int i = 0; i < backgroundFilteredContours.size(); i++){
-//                    if (pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 3 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height){
-//                        backgroundFilteredImage.at<uchar>(y, x) = 255;
-//                        backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = image.at<cv::Vec3b>(y,x);
-//                    }
-//                }
-//            }
-//            else {
-//                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
-//            }
-//        }
-//    }
+
+    // just to display the image
+
+    /*cv::Mat backgroundFilteredImage = backgroundMask2.clone();
+    cv::Mat backgroundFilteredImageColor = image.clone();
+
+
+    for (int x = 0; x < image.cols; x++){
+        for (int y = 0; y < image.rows; y++){
+            if (backgroundMaskDilated.at<uchar>(y, x) == 255){
+                backgroundFilteredImage.at<uchar>(y, x) = 0;
+                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
+                for (int i = 0; i < backgroundFilteredContours.size(); i++){
+                    if (pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 3 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height){
+                        backgroundFilteredImage.at<uchar>(y, x) = 255;
+                        backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = image.at<cv::Vec3b>(y,x);
+                    }
+                }
+            }
+            else {
+                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
+            }
+        }
+    }*/
 
     for (int i = 0; i < listPlayerImages.size(); i++){
         for (int x = backgroundFilteredRects[i].x; x < backgroundFilteredRects[i].x + backgroundFilteredRects[i].width; x++){
             for (int y = backgroundFilteredRects[i].y; y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height; y++){
-                if (backgroundMask2.at<uchar>(y, x) == 255){
+                if (backgroundMaskDilated.at<uchar>(y, x) == 255){
                     if (!(pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 3 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height)){
                         listPlayerImages[i].at<cv::Vec3b>(y-backgroundFilteredRects[i].y, x-backgroundFilteredRects[i].x) = black;
                     }
@@ -130,7 +125,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
             }
         }
 //        cv::imshow("Output", listPlayerImages[i]);
-//        cv::waitKey(10);
+//        cv::waitKey(4000);
     }
 
 //    cv::imshow("Output", backgroundMask1);
@@ -148,10 +143,6 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
         if (num.number != -1){
             output->addData(backgroundFilteredRects[i].x + num.pos.x, backgroundFilteredRects[i].y + num.pos.y, num.number);
         }
-
-        //output->addData(backgroundFilteredRects[i].x, backgroundFilteredRects[i].y, mostProbableDigit(listPlayerImages[i].clone(), digitsOnField));
-        //cv::imshow("Output", listPlayerImages[i]);
-        //cv::waitKey(40000);
     }
 
     return output;
