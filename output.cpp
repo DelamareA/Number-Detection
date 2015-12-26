@@ -27,19 +27,31 @@ cv::Mat Output::getImage(){
         cv::Point p1;
         cv::Point p2;
         cv::Point p3;
+        cv::Point p4;
+        cv::Point p5;
 
         p1.x = listX[i];
         p1.y = listY[i];
 
-        p2.x = listX[i] + 36;
-        p2.y = listY[i] + 45;
+        p2.x = listX[i] + 44;
+        p2.y = listY[i] + 52;
 
         p3.x = listX[i];
-        p3.y = listY[i] + 45;
+        p3.y = listY[i] + 52;
 
-        rectangle(baseImage, p1, p2, cv::Scalar(0,0,255));
+        p4.x = listX[i] + 22;
+        p4.y = listY[i] + 26;
 
-        putText(baseImage, QString::number(listNum[i]).toStdString(), p3, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 1, cv::Scalar(0,0,255));
+        p5.x = listX[i] + 44;
+        p5.y = listY[i] + 26;
+
+        line(baseImage, p1, p3, cv::Scalar(0,0,255), 1);
+        line(baseImage, p1, p4, cv::Scalar(0,0,255), 1);
+        line(baseImage, p4, p5, cv::Scalar(0,0,255), 1);
+        line(baseImage, p5, p2, cv::Scalar(0,0,255), 1);
+        line(baseImage, p3, p2, cv::Scalar(0,0,255), 1);
+
+        putText(baseImage, QString::number(listNum[i]).toStdString(), p3, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 1, cv::Scalar(0,0,255), 2);
     }
 
     return baseImage;
