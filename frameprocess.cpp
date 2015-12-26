@@ -1,10 +1,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/background_segm.hpp>
-#include "functions.h"
+#include "headers.h"
 #include <vector>
 
-Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat background, QList<int> digitsOnField){
+Output* frameProcess(cv::Mat image, cv::Mat background){
     cv::Mat imageTransformed = image;
     cv::Mat blurredImage;
     cv::Mat imageHue;
@@ -23,7 +23,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     // EXTRACT BACKGROUND
     // ------------------
 
-    int maxBackgroundColorDistance = Configuration::getMaxBackgroundColorDistance();
+    int maxBackgroundColorDistance = Config::getMaxBackgroundColorDistance();
 
     for (int y = 0; y < backgroundMask1.rows; y++){
         cv::Vec3b* rowImage = blurredImage.ptr<cv::Vec3b>(y);
@@ -142,7 +142,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     for (int i = 0; i < listPlayerImages.size(); i++){
         listPlayerImagesNumbers.push_back(listPlayerImages[i].clone());
 
-        NumPos num = mostProbableNumber(listPlayerImages[i].clone(), digitsOnField);
+        NumPos num = mostProbableNumber(listPlayerImages[i].clone());
 
         if (num.number != -1){
             output->addData(backgroundFilteredRects[i].x + num.pos.x, backgroundFilteredRects[i].y + num.pos.y, num.number);
@@ -154,16 +154,6 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     }
 
     return output;
-}
-
-Output* basicTemplateMatching(cv::Mat image, cv::Mat background, QList<int> digitsOnField){
-    int modules[MODULES_COUNT];
-    modules[TEMPLATE_MATCHING] = 7;
-    modules[CENTER_MASS] = 0;
-    modules[HALVES_CENTER_MASS_VERTI] = 0;
-    modules[HALVES_CENTER_MASS_HORI] = 0;
-    modules[HISTOGRAMS] = 3000;
-    return templateMatching(image, modules, background, digitsOnField);
 }
 
 int colorDistance(cv::Vec3b c1, cv::Vec3b c2){

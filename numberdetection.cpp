@@ -1,10 +1,10 @@
-#include "functions.h"
-#include "configuration.h"
+#include "headers.h"
+#include "config.h"
 #include <QDebug>
 
 #define BIN_SIZE 20
 
-NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
+NumPos mostProbableNumber(cv::Mat image){
     cv::Mat blurredImage;
     cv::Mat labImage;
     cv::Mat final;
@@ -366,14 +366,14 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         return result;
     }
     else if (finalContours.size() == 1){
-        result.number = digitHelper(final, digitsOnField, finalContours[0], finalRects[0]);
+        result.number = digitHelper(final, finalContours[0], finalRects[0]);
         result.pos.x = finalRects[0].x + finalRects[0].width/2;
         result.pos.y = finalRects[0].y + finalRects[0].height/2;
         return result;
     }
     else {
-        int digit1 = digitHelper(final, digitsOnField, finalContours[0], finalRects[0]);
-        int digit2 = digitHelper(final, digitsOnField, finalContours[1], finalRects[1]);
+        int digit1 = digitHelper(final, finalContours[0], finalRects[0]);
+        int digit2 = digitHelper(final, finalContours[1], finalRects[1]);
 
         if (digit1 == 1){
             result.number = 10 + digit2;
@@ -392,7 +392,7 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     }
 }
 
-int digitHelper(cv::Mat bigImage, QList<int> digitsOnField, std::vector<cv::Point> contour, cv::Rect rect) {
+int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect) {
     cv::Mat digitImage(rect.height, rect.width, CV_8U);
     for (int x = rect.x; x < rect.x + rect.width; x++){
         for (int y = rect.y; y < rect.y + rect.height; y++){
@@ -421,10 +421,10 @@ int digitHelper(cv::Mat bigImage, QList<int> digitsOnField, std::vector<cv::Poin
         shiftedContour[j].y -= rect.y;
     }
 
-    return mostProbableDigit(digitImage, digitsOnField, shiftedContour);
+    return mostProbableDigit(digitImage, shiftedContour);
 }
 
-int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector<cv::Point> contour){
+int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour){
 
     cv::RotatedRect rect = cv::minAreaRect(contour);
 
@@ -452,17 +452,10 @@ int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector
     cv::Mat skeleton = thinningGuoHall(resized);
     Skeleton ske(skeleton, resized);
 
-    QVector<int> possibleDigits = ske.possibleNumbers(digitsOnField).toVector();
-
-    if (possibleDigits.empty()){
-        return 0;
-    }
-    else {
-        return possibleDigits[0];
-    }
+    return ske.mostProbableDigit();
 }
 
-void runOnDataSet(QList<int> digitsOnField){
+void runOnDataSet(){
     int success = 0;
     int fail = 0;
     int notFound = 0;
@@ -474,7 +467,7 @@ void runOnDataSet(QList<int> digitsOnField){
 
                 qDebug() << i << j;
 
-                int num = mostProbableNumber(image, digitsOnField).number;
+                int num = mostProbableNumber(image).number;
                 if (num == i){
                     success++;
                     qDebug() << "Success !" << num;

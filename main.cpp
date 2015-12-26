@@ -1,35 +1,14 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
-#include "functions.h"
+#include "headers.h"
 
 using namespace cv;
 
-int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bool isVideo, QString templatesPath, QString outputPath, QString configPath, QString backgroundPath, QList<int> possibleDigits);
+int loadAndRun();
 
 int main(int argc, char *argv[]){
-
-    bool isVideo = true;
-    QString imagePath = "tempframes/6.png";
-    QString videoPath = "29.mp4";
-    QString outputVideoPath = "output.avi";
-    QString templatesPath = "templatesNumber4/";
-    QString outputPath = "output.txt";
-    QString configPath = "config.txt";
-    QString backgroundPath = "backgroundBlackBorders2.png";
-    QList<int> digitsOnField;
-    digitsOnField.push_back(0);
-    digitsOnField.push_back(1);
-    digitsOnField.push_back(2);
-    digitsOnField.push_back(5);
-    digitsOnField.push_back(6);
-    digitsOnField.push_back(8);
-    digitsOnField.push_back(9);
-
     // Below is the code to generate the datasets to train the svms
-
-    //generateJerseySVM("svm/green/");
-    //generateJerseySVM("svm/red/");
 
     /*QList<int> all;
     for (int i = 0; i < 10; i++){
@@ -47,99 +26,19 @@ int main(int argc, char *argv[]){
         }
     }*/
 
-
-    /*QList<int> zeroHole;
-    zeroHole.push_back(1);
-    zeroHole.push_back(2);
-    zeroHole.push_back(3);
-    zeroHole.push_back(5);
-    zeroHole.push_back(7);
-
-    for (int i = 0; i < 10; i++){
-        for (int j = i+1; j < 10; j++){
-            if (zeroHole.contains(i) && zeroHole.contains(j)){
-                QList<int> numbers;
-                numbers.push_back(i);
-                numbers.push_back(j);
-                generateDataSet(numbers, 100, 36, 45, "svm/" + QString::number(i) + "-" + QString::number(j) + "/");
-                generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", M0);
-            }
-        }
-    }
-
-    QList<int> oneHole;
-    oneHole.push_back(0);
-    oneHole.push_back(4);
-    oneHole.push_back(6);
-    oneHole.push_back(9);
-
-    for (int i = 0; i < 10; i++){
-        for (int j = i+1; j < 10; j++){
-            if (oneHole.contains(i) && oneHole.contains(j)){
-                QList<int> numbers;
-                numbers.push_back(i);
-                numbers.push_back(j);
-                generateDataSet(numbers, 100, 36, 45, "svm/" + QString::number(i) + "-" + QString::number(j) + "/");
-                generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", M1);
-            }
-        }
-    }*/
-
-    return loadAndRun(imagePath, videoPath, outputVideoPath, isVideo, templatesPath, outputPath, configPath, backgroundPath, digitsOnField);
+    return loadAndRun();
 }
 
-int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bool isVideo, QString templatesPath, QString outputPath, QString configPath, QString backgroundPath, QList<int> possibleDigits){
-
-    Configuration::setConfigFromFile(configPath);
-    cv::Mat background = cv::imread(backgroundPath.toStdString());
+int loadAndRun(){
+    Config::setConfigFromFile("config.txt");
+    cv::Mat background = cv::imread(Config::getBackgroundPath().toStdString());
 
     Output* out = 0;
 
-    Machines machines;
-    if (HOLE_SEPARATION){
-        QList<int> zeroHole;
-        zeroHole.push_back(1);
-        zeroHole.push_back(2);
-        zeroHole.push_back(3);
-        zeroHole.push_back(5);
-        zeroHole.push_back(7);
+//    runOnDataSet();
 
-        for (int i = 0; i < 10; i++){
-            for (int j = i+1; j < 10; j++){
-                if (zeroHole.contains(i) && zeroHole.contains(j)){
-                    machines.m[i][j] = cv::ml::SVM::load<cv::ml::SVM>(QString("svm/" + QString::number(i) + "-" + QString::number(j) + "/svm.xml").toStdString());
-                }
-            }
-        }
-
-        QList<int> oneHole;
-        oneHole.push_back(0);
-        oneHole.push_back(4);
-        oneHole.push_back(6);
-        oneHole.push_back(9);
-
-        for (int i = 0; i < 10; i++){
-            for (int j = i+1; j < 10; j++){
-                if (oneHole.contains(i) && oneHole.contains(j)){
-                    machines.m[i][j] = cv::ml::SVM::load<cv::ml::SVM>(QString("svm/" + QString::number(i) + "-" + QString::number(j) + "/svm.xml").toStdString());
-                }
-            }
-        }
-    }
-    else {
-        for (int i = 0; i < 10; i++){
-            for (int j = i+1; j < 10; j++){
-                machines.m[i][j] = cv::ml::SVM::load<cv::ml::SVM>(QString("svm/" + QString::number(i) + "-" + QString::number(j) + "/svm.xml").toStdString());
-            }
-        }
-    }
-
-    Skeleton::setMachines(machines);
-
-//    runOnDataSet(possibleDigits);
-
-    if (isVideo){
-        cv::VideoCapture inputVideo(videoPath.toStdString());
+    if (Config::getIsVideo()){
+        cv::VideoCapture inputVideo(Config::getVideoPath().toStdString());
         if (!inputVideo.isOpened()){
             qDebug() << "Could not open video";
             return -1;
@@ -148,7 +47,7 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
         cv::Size size = cv::Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH), (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));
 
         cv::VideoWriter outputVideo;
-        outputVideo.open(outputVideoPath.toStdString(), -1, 1, size, true);
+        outputVideo.open(Config::getOutputVideoPath().toStdString(), -1, 1, size, true);
 
         if (!outputVideo.isOpened()){
             qDebug() << "Could not open video output";
@@ -176,7 +75,7 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
 
             imwrite(QString("tempframes/" + QString::number(frameCount)+  ".png").toStdString(), image);
 
-            out = basicTemplateMatching(image, background, possibleDigits);
+            out = frameProcess(image, background);
             outputVideo << out->getImage();
             frameCount++;
             outputText += out->toString();
@@ -193,25 +92,25 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
 
         outputText = QString::number(width) + '@' + QString::number(height) + '@' + QString::number(frameCount) + "@" + outputText + "@";
 
-        QFile file(outputPath);
+        QFile file(Config::getOutputTextPath());
         if (file.open(QIODevice::WriteOnly)){
             QTextStream stream(&file);
             stream << outputText << endl;
             file.close();
         }
         else {
-            qDebug() << "Cannot open " + outputPath;
+            qDebug() << "Cannot open " + Config::getOutputTextPath();
         }
 
     }
     else {
-        cv::Mat image = cv::imread(imagePath.toStdString());
+        cv::Mat image = cv::imread(Config::getImagePath().toStdString());
 
         if (image.rows != background.rows || image.cols != background.cols){
             qDebug() << "Image and background have not the same size";
         }
 
-        out = basicTemplateMatching(image, background, possibleDigits);
+        out = frameProcess(image, background);
 
         cv::namedWindow("Output");
         cv::imshow("Output", out->getImage());

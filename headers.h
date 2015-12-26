@@ -4,7 +4,7 @@
 #include "output.h"
 #include "template.h"
 #include "skeleton.h"
-#include "configuration.h"
+#include "config.h"
 #include <opencv2/core.hpp>
 
 #define MODULES_COUNT 5
@@ -20,9 +20,7 @@ struct NumPos {
     cv::Point2i pos;
 };
 
-Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat backgroundLab, QList<int> digitsOnField);
-
-Output* basicTemplateMatching(cv::Mat image, cv::Mat background, QList<int> digitsOnField);
+Output* frameProcess(cv::Mat image, cv::Mat background);
 
 int colorDistance(cv::Vec3b c1, cv::Vec3b c2);
 
@@ -42,10 +40,10 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 void generateSVM(QString path, int type);
 void generateJerseySVM(QString path);
 
-NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField);
-int mostProbableDigit(cv::Mat numberImage, QList<int> digitsOnField, std::vector<cv::Point> contour);
-int digitHelper(cv::Mat bigImage, QList<int> digitsOnField, std::vector<cv::Point> contour, cv::Rect rect);
-void runOnDataSet(QList<int> digitsOnField);
+NumPos mostProbableNumber(cv::Mat image);
+int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour);
+int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect);
+void runOnDataSet();
 
 #endif // FUNCTIONS
 

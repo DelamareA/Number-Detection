@@ -1,7 +1,7 @@
 #include "skeleton.h"
 #include <QDebug>
 
-Machines Skeleton::machines;
+
 
 Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
 
@@ -346,8 +346,9 @@ Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
 
 }
 
-QList<int> Skeleton::possibleNumbers(QList<int> digitsOnField){
+int Skeleton::mostProbableDigit(){
     QList<int> list;
+    QSet<int> digitsOnField = Config::getDigitsOnField();
 
     /*if (listHoles.size() > 2 || listJunctions.size() > 5 || listLineEnds.size() > 5){
         // certainly a bad 'catch'
@@ -435,7 +436,7 @@ QList<int> Skeleton::possibleNumbers(QList<int> digitsOnField){
                 int vote = 0;
                 for (int j = 0; j < 10; j++){
                     if (i != j && zeroHole.contains(i) && zeroHole.contains(j)){
-                        float response = Skeleton::machines.m[min(i,j)][max(i,j)]->predict(sampleMat);
+                        float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
 
                         if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
                             vote++;
@@ -484,7 +485,7 @@ QList<int> Skeleton::possibleNumbers(QList<int> digitsOnField){
                 int vote = 0;
                 for (int j = 0; j < 10; j++){
                     if (i != j && oneHole.contains(i) && oneHole.contains(j)){
-                        float response = Skeleton::machines.m[min(i,j)][max(i,j)]->predict(sampleMat);
+                        float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
 
                         if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
                             vote++;
@@ -536,7 +537,7 @@ QList<int> Skeleton::possibleNumbers(QList<int> digitsOnField){
             int vote = 0;
             for (int j = 0; j < 10; j++){
                 if (i != j && digitsOnField.contains(i) && digitsOnField.contains(j)) {
-                    float response = Skeleton::machines.m[min(i,j)][max(i,j)]->predict(sampleMat);
+                    float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
 
                     if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
                         vote++;
@@ -560,7 +561,12 @@ QList<int> Skeleton::possibleNumbers(QList<int> digitsOnField){
         }
     }
 
-    return list;
+    if (list.isEmpty()){
+        return -1;
+    }
+    else {
+        return list[0];
+    }
 }
 
 QList<double> Skeleton::vectorization(int type) {
@@ -815,8 +821,4 @@ QList<cv::Point2d> Skeleton::sort(QList<cv::Point2d> list){
     }
 
     return result;
-}
-
-void Skeleton::setMachines(Machines newMachines){
-    Skeleton::machines = newMachines;
 }

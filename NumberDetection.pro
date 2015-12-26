@@ -17,17 +17,17 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    configuration.cpp \
-    functions.cpp \
     numberdetection.cpp \
     output.cpp \
     skeleton.cpp \
-    svm.cpp
+    svm.cpp \
+    config.cpp \
+    frameprocess.cpp
 
 HEADERS  += \
-    configuration.h \
-    functions.h \
     output.h \
-    skeleton.h
+    skeleton.h \
+    config.h \
+    headers.h
 
 FORMS    +=

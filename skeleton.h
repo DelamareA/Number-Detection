@@ -5,7 +5,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <QList>
 
-#include "functions.h"
+#include "headers.h"
 
 #define MERGE_DISTANCE 0.05
 #define DELETE_DISTANCE 0.15
@@ -40,10 +40,6 @@
 
 enum {M0, M1};
 
-struct Machines{
-    cv::Ptr<cv::ml::SVM> m[TEMPLATES_COUNT][TEMPLATES_COUNT];
-};
-
 struct LabeledPoint {
     int label;
     cv::Point2i point;
@@ -52,10 +48,9 @@ struct LabeledPoint {
 class Skeleton {
 
     public:
-        static Machines machines;
 
         Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage);
-        QList<int> possibleNumbers(QList<int> digitsOnField);
+        int mostProbableDigit();
         QList<cv::Point2d> sort(QList<cv::Point2d> list);
         double min(double a, double b);
         double max(double a, double b);
@@ -74,9 +69,7 @@ class Skeleton {
         static int getTotalCount(int type);
         static int getPartCount(int type);
 
-        static void setMachines(Machines newMachines);
-
-    public: // CHANGE
+    private:
         QList<LabeledPoint> startList;
         QList<cv::Point2d> listHoles;
         QList<cv::Point2d> listFakeHoles;
