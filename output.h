@@ -8,6 +8,10 @@
 #define MERGE_DISTANCE_X 50
 #define MERGE_DISTANCE_Y 20
 
+/**
+ * @brief The Output class represents the output of the processing of a frame,
+ * containing the detected numbers and their position.
+ */
 class Output{
 
     public:

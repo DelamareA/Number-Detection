@@ -15,6 +15,10 @@ SVMs Config::machines;
 Config::Config(){
 }
 
+/**
+ * @brief Config::setConfigFromFile Initializes the configuration for the programm.
+ * @param path The path of the config file.
+ */
 void Config::setConfigFromFile(QString path){
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)){

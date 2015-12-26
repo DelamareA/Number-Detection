@@ -34,21 +34,26 @@ struct LabeledPoint {
     cv::Point2i point;
 };
 
+/**
+ * @brief The Skeleton class represents a skeletonized version of a digit.
+ */
 class Skeleton {
 
     public:
-
         Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage);
+
         int mostProbableDigit();
-        QList<cv::Point2d> sort(QList<cv::Point2d> list);
-        double min(double a, double b);
-        double max(double a, double b);
-        int min(int a, int b);
-        int max(int a, int b);
         QList<double> vectorization();
+
         cv::Point2d getMassCenter(cv::Mat ske);
         double getCount(cv::Mat ske);
         void setParts(cv::Mat ske);
+
+        static double min(double a, double b);
+        static double max(double a, double b);
+        static int min(int a, int b);
+        static int max(int a, int b);
+        static QList<cv::Point2d> sort(QList<cv::Point2d> list);
 
     private:
         QList<LabeledPoint> startList;

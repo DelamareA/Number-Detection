@@ -1,9 +1,12 @@
 #include <QDebug>
 #include "skeleton.h"
 
+/**
+ * @brief Skeleton::Skeleton Main constructor for a skeleton.
+ * @param skeletonizedImage The skeletonized version of the image.
+ * @param normalImage The image of the digit, in black and white.
+ */
 Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
-
-    //QList<LabeledPoint> startList;
     QVector<cv::Point2i> dummyJunctionList;
     QVector<LabeledPoint> removedPoints;
     QVector<int> survivors;
@@ -344,8 +347,11 @@ Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
 
 }
 
+/**
+ * @brief Skeleton::mostProbableDigit Outputs the most probable digit of the skeleton.
+ * @return the most probable digit of the skeleton.
+ */
 int Skeleton::mostProbableDigit(){
-    QList<int> list;
     QSet<int> digitsOnField = Config::getDigitsOnField();
 
     int dim = VECTOR_DIMENSION;
@@ -385,19 +391,17 @@ int Skeleton::mostProbableDigit(){
 
     if (intMaxVote == -1){
         qDebug() << "Error : No vote is greater than 0";
-    }
-    else {
-        list.push_back(intMaxVote);
-    }
-
-    if (list.isEmpty()){
         return -1;
     }
     else {
-        return list[0];
+        return intMaxVote;
     }
 }
 
+/**
+ * @brief Skeleton::vectorization Outputs a vectorized representation of the skeleton.
+ * @return a vectorized representation of the skeleton, which depends on the values of END_COUNT, HOLE_COUNT, etc.
+ */
 QList<double> Skeleton::vectorization() {
     QList<double> result;
 
@@ -456,6 +460,11 @@ QList<double> Skeleton::vectorization() {
     return result;
 }
 
+/**
+ * @brief Skeleton::getMassCenter Outputs the mass center of the skeleton.
+ * @param ske The image of the skeleton.
+ * @return the mass center of the skeleton, x and y are between 0 and 1.
+ */
 cv::Point2d Skeleton::getMassCenter(cv::Mat ske){
     int sumX = 0;
     int sumY = 0;
@@ -473,18 +482,14 @@ cv::Point2d Skeleton::getMassCenter(cv::Mat ske){
     double tempX = (sumX / count) / ske.cols;
     double tempY = (sumY / count) / ske.rows;
 
-    tempX = (tempX - 0.5) * 3;
-
-    if (tempX < 0){
-        tempX = 0;
-    }
-    else if (tempX > 1){
-        tempX = 1;
-    }
-
     return cv::Point2d(tempX, tempY);
 }
 
+/**
+ * @brief Skeleton::getCount Outputs the total number of white pixels in the skeleton.
+ * @param ske The skeleton image.
+ * @return A value between 0 and 1 representing the total number of white pixels in the skeleton.
+ */
 double Skeleton::getCount(cv::Mat ske){
     double count = 0;
     for (int i = 0; i < ske.cols; i++){
@@ -497,9 +502,14 @@ double Skeleton::getCount(cv::Mat ske){
 
     double tempCount = count / (ske.cols * ske.rows);
 
+    // increase value, for better detection results, otherwise, each number is very close to 0
     return min(tempCount * 20, 1.0);
 }
 
+/**
+ * @brief Skeleton::setParts Set the number of white pixels for each part of the image.
+ * @param ske The skeleton image.
+ */
 void Skeleton::setParts(cv::Mat ske){
     for (int x = 0; x < PART_X; x++){
         for (int y = 0; y < PART_Y; y++){
@@ -522,7 +532,7 @@ void Skeleton::setParts(cv::Mat ske){
         }
     }
 
-    // increase value, for better detection results, otherwisw, each number is very close to 0
+    // increase value, for better detection results, otherwise, each number is very close to 0
     for (int x = 0; x < PART_X; x++){
         for (int y = 0; y < PART_Y; y++){
             parts[x][y] = min(parts[x][y] * 20, 1.0);

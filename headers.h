@@ -31,7 +31,7 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 void generateSVM(QString path);
 
 NumPos mostProbableNumber(cv::Mat image);
-int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour);
+int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour);
 int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect);
 void runOnDataSet();
 

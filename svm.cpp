@@ -14,6 +14,14 @@
 using namespace cv;
 using namespace cv::ml;
 
+/**
+ * @brief generateDataSet Generates a dataset of digit images.
+ * @param numbers The different numbers to generate.
+ * @param countPerNumber The number of images to create per number.
+ * @param width The width of the images.
+ * @param height The height of the images.
+ * @param outputPath Where the images have to be written.
+ */
 void generateDataSet(QList<int> numbers, int countPerNumber, int width, int height, QString outputPath) {
     char **argv = new char*[1];
     argv[0] = new char[1];
@@ -81,7 +89,6 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
                     angle += 90.0;
                     swap(rectSize.width, rectSize.height);
                 }
-                //qDebug() << angle << " vs " << realAngle;
                 Mat rotationMatrix = getRotationMatrix2D(rect.center, angle, 1.0);
                 Mat rotated, cropped;
                 warpAffine(mat, rotated, rotationMatrix, mat.size(), INTER_CUBIC);
@@ -92,36 +99,6 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 
                 imwrite(QString(outputPath + "dataset/" + QString::number(i * countPerNumber + j) + ".png").toStdString(), resized);
             }
-
-            /*int minX = pix.width()-1;
-            int maxX = 0;
-            int minY = pix.height()-1;
-            int maxY = 0;
-            for (int x = 0; x < pix.width(); x++){
-                for (int y = 0; y < pix.height(); y++){
-                    QRgb val = image.pixel(x, y);
-                    if (qRed(val) > 120){
-                        image.setPixel(x, y, qRgb(255, 255, 255));
-                        if (x < minX){
-                            minX = x;
-                        }
-                        if (x > maxX){
-                            maxX = x;
-                        }
-                        if (y < minY){
-                            minY = y;
-                        }
-                        if (y > maxY){
-                            maxY = y;
-                        }
-                    }
-                    else {
-                        image.setPixel(x, y, qRgb(0, 0, 0));
-                    }
-                }
-            }
-            QRect rect(QPoint(minX, minY), QPoint(maxX, maxY));
-            image.copy(rect).scaled(width, height).save(outputPath + "dataset/" + QString::number(i * countPerNumber + j) + ".png");*/
 
             labels += " " + QString::number(numbers[i]);
         }
@@ -138,7 +115,10 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
     }
 }
 
-
+/**
+ * @brief generateSVM Generates an SVM.
+ * @param path The path of the svm folder. It must contain : "labels.txt" and a folder "dataset" where the digit images are.
+ */
 void generateSVM(QString path){
     QFile file(path + "labels.txt");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -183,7 +163,6 @@ void generateSVM(QString path){
     Ptr<TrainData> data = TrainData::create(trainingDataMat, ROW_SAMPLE, labelsMat);
 
     svm->setKernel(cv::ml::SVM::RBF);
-    //svm->setType(cv::ml::SVM::C_SVC);
     svm->setGamma(3);
     svm->trainAuto(data);
     svm->save((path + "svm.xml").toStdString());

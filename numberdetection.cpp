@@ -4,68 +4,40 @@
 
 #define BIN_SIZE 20
 
+/**
+ * @brief mostProbableNumber Function, that given a player's image, outputs the number.
+ * @param image The player's image.
+ * @return The number or -1 if none was detected.
+ */
 NumPos mostProbableNumber(cv::Mat image){
-    cv::Mat blurredImage;
     cv::Mat labImage;
-    cv::Mat final;
-    cv::Mat jerseyFinal;
-    GaussianBlur(image, blurredImage, cv::Size(1, 1), 0, 0);
-    cvtColor(blurredImage, labImage, CV_BGR2Lab);
-    cvtColor(image, jerseyFinal, CV_BGR2GRAY);
-    cvtColor(image, final, CV_BGR2GRAY);
+    cvtColor(image, labImage, CV_BGR2Lab);
 
     cv::Mat colorSeg;
     cv::Mat colorSegLab;
     pyrMeanShiftFiltering(labImage, colorSegLab, 18, 18, 1);
     cvtColor(colorSegLab, colorSeg, CV_Lab2BGR);
 
+    // Detection of the jersey (which color is the dominant color of the image)
+
     int histo[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
-    int widerHisto[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
 
     for (int i = 0; i < 255 / BIN_SIZE; i++){
         for (int j = 0; j < 255 / BIN_SIZE; j++){
             for (int k = 0; k < 255 / BIN_SIZE; k++){
                 histo[i][j][k] = 0;
-                widerHisto[i][j][k] = 0;
             }
         }
     }
 
-    long meanV = 0;
-    int maxL = 0;
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
             cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
-            if (val[0]/BIN_SIZE != 0 || val[1]/BIN_SIZE != 128/BIN_SIZE || val[2]/BIN_SIZE != 128/BIN_SIZE){ // black pixels dont count
+            if (val[0]/BIN_SIZE != 0 || val[1]/BIN_SIZE != 128/BIN_SIZE || val[2]/BIN_SIZE != 128/BIN_SIZE){ // black pixels don't count
                 histo[val[0]/BIN_SIZE][val[1]/BIN_SIZE][val[2]/BIN_SIZE]++;
-
-                meanV += val[2];
-
-                if (maxL < val[0]){
-                    maxL = val[0];
-                }
-
-                //qDebug() << "Temp : " << val[0] << val[1] << val[2];
             }
 
-        }
-    }
-
-    meanV /= (image.cols * image.rows);
-
-    for (int i = 1; i < 255 / BIN_SIZE - 1; i++){
-        for (int j = 1; j < 255 / BIN_SIZE - 1; j++){
-            for (int k = 1; k < 255 / BIN_SIZE - 1; k++){
-
-                for (int i2 = -1; i2 <= 1; i2++){
-                    for (int j2 = -1; j2 <= 1; j2++){
-                        for (int k2 = -1; k2 <= 1; k2++){
-                            widerHisto[i][j][k] += histo[i + i2][j + j2][k + k2];
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -81,16 +53,15 @@ NumPos mostProbableNumber(cv::Mat image){
                     maxVoteL = i * BIN_SIZE + BIN_SIZE / 2;
                     maxVoteA = j * BIN_SIZE + BIN_SIZE / 2;
                     maxVoteB = k * BIN_SIZE + BIN_SIZE / 2;
-
-//                    qDebug() << "Vote : " << maxVote;
-//                    qDebug() << "Temp : " << maxH * (BIN_SIZE * 360 / 255) << maxS * (BIN_SIZE * 100 / 255) << maxV * (BIN_SIZE * 100 / 255);
                 }
             }
         }
     }
 
-    qDebug() << "Values : " << maxVoteL * 100 / 255 << maxVoteA - 128 << maxVoteB - 128;
-    //qDebug() << "Indices : " << (maxH - BIN_SIZE / 2) / BIN_SIZE << (maxS - BIN_SIZE / 2) / BIN_SIZE << (maxV - BIN_SIZE / 2) / BIN_SIZE;
+    //qDebug() << "Value of the dominant color : " << maxVoteL * 100 / 255 << maxVoteA - 128 << maxVoteB - 128;
+
+    cv::Mat jerseyFinal; // the image with the jersey appearing in white
+    cvtColor(image, jerseyFinal, CV_BGR2GRAY);
 
     double tL = 20;
     double tA = 20;
@@ -121,6 +92,9 @@ NumPos mostProbableNumber(cv::Mat image){
 
     findContours(jerseyFinalEroded, jerseyContours, jerseyHierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+    cv::Mat final; // the image with the number in white
+    cvtColor(image, final, CV_BGR2GRAY);
+
     if (jerseyContours.size() < 1){
         qDebug() << "Error, 0 shirt detected";
 
@@ -131,9 +105,11 @@ NumPos mostProbableNumber(cv::Mat image){
         }
     }
     else {
+        // We find the contour of the jersey and we find the number in it
+
         std::vector<cv::Point> trueJerseyContour = jerseyContours[0];
 
-        for (int i = 0; i < jerseyContours.size(); i++){
+        for (unsigned int i = 0; i < jerseyContours.size(); i++){
             if (minAreaRect(jerseyContours[i]).boundingRect().area() > minAreaRect(trueJerseyContour).boundingRect().area()){
                 trueJerseyContour = jerseyContours[i];
             }
@@ -155,7 +131,9 @@ NumPos mostProbableNumber(cv::Mat image){
                 else {
                     cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
-                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 0 && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -8 && val[0] >= maxVoteL){
+                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 0
+                            && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -8
+                            && val[0] >= maxVoteL){
                         final.at<uchar>(y, x) = 255;
                     }
                     else {
@@ -173,111 +151,10 @@ NumPos mostProbableNumber(cv::Mat image){
         cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
     }
 
-    /*for (int x = 0; x < image.cols; x++){
-        for (int y = 0; y < image.rows; y++){
-            cv::Vec3b intensity = image.at<cv::Vec3b>(y, x);
-
-            float sampleData[3];
-            sampleData[0] = intensity[0];
-            sampleData[1] = intensity[1];
-            sampleData[2] = intensity[2];
-
-            cv::Mat sampleMat(1, 3, CV_32FC1, sampleData);
-
-            float responseGreen = Configuration::jerseyMachines.m[1]->predict(sampleMat);
-
-            if (responseGreen == 1.0){
-                final.at<uchar>(y, x) = 255;
-            }
-            else {
-                /*float responseRed = Configuration::jerseyMachines.m[1]->predict(sampleMat);
-
-                if (responseRed == 1.0){
-                    final.at<uchar>(y, x) = 255;
-                }
-                else {
-
-                }*/
-
-                /*final.at<uchar>(y, x) = 0;
-            }
-        }
-    }*/
-
-    /*cv::Mat colorSeg;
-    pyrMeanShiftFiltering(blurredImage, colorSeg, 10, 18, 3);
-
-    cv::Mat colorSegHSV;
-    cvtColor(colorSeg, colorSegHSV, CV_BGR2HSV);
-
-    //cv::imshow("Hello", colorSeg);
-    //cv::waitKey(40000 );
-
-    cv::Mat imageLab;
-    cvtColor(colorSeg, imageLab, CV_BGR2Lab);
-
-    cv::Scalar mean = cv::mean(imageLab);
-
-    cv::Mat saliency;
-    cvtColor(image, saliency, CV_BGR2GRAY);
-
-    for (int x = 0; x < imageLab.cols; x++){
-        for (int y = 0; y < imageLab.rows; y++){
-            cv::Vec3b intensity = imageLab.at<cv::Vec3b>(y, x);
-            uchar value = sqrt(pow((intensity[0] - mean[0]),2) + pow((intensity[1] - mean[1]),2) + pow((intensity[2] - mean[2]),2));
-            saliency.at<uchar>(y, x) = value;
-
-            if (value > 30){
-                final.at<uchar>(y, x) = 255;
-            }
-            else {
-                final.at<uchar>(y, x) = 0;
-            }
-        }
-    }*/
-
-    /*int maxV = 0;
-    int maxS = 0;
-    long meanV = 0;
-    long meanS = 0;
-    for (int x = 0; x < image.cols; x++){
-        for (int y = 0; y < image.rows; y++){
-            cv::Vec3b intensity = colorSegHSV.at<cv::Vec3b>(y, x);
-
-            meanV += intensity[2];
-            meanS += intensity[1];
-
-            if (intensity[2] > maxV){
-                maxV = intensity[2];
-            }
-
-            if (intensity[1] > maxS){
-                maxS = intensity[1];
-            }
-        }
-    }
-
-    meanV /= (image.cols * image.rows);
-    meanS /= (image.cols * image.rows);
-
-    for (int x = 0; x < image.cols; x++){
-        for (int y = 0; y < image.rows; y++){
-            cv::Vec3b intensity = colorSegHSV.at<cv::Vec3b>(y, x);
-
-            if (intensity[2] > maxV * 0.7){
-                final.at<uchar>(y, x) = 255;
-            }
-            else {
-                final.at<uchar>(y, x) = 0;
-            }
-        }
-    }*/
-
 //    cv::imshow("Output", colorSeg);
 //    cv::waitKey(40000);
 
-//    cv::imshow("Output", final);
-//    cv::waitKey(40000);
+    // Number detection
 
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -347,6 +224,7 @@ NumPos mostProbableNumber(cv::Mat image){
     QVector<cv::Rect> finalRects;
     QVector<std::vector<cv::Point> > finalContours;
 
+    // Selection of at most 2 contours
     if (sortedContours.size() > 2){
         finalRects.push_back(sortedRects[sortedContours.size()/2]);
         finalContours.push_back(sortedContours[sortedContours.size()/2]);
@@ -375,14 +253,14 @@ NumPos mostProbableNumber(cv::Mat image){
         int digit1 = digitHelper(final, finalContours[0], finalRects[0]);
         int digit2 = digitHelper(final, finalContours[1], finalRects[1]);
 
-        if (digit1 == 1){
-            result.number = 10 + digit2;
+        if (Config::getNumbersOnField().contains(digit1 * 10 + digit2)){
+            result.number = digit1 * 10 + digit2;
             result.pos.x = finalRects[0].x + finalRects[0].width/2;
             result.pos.y = finalRects[0].y + finalRects[0].height/2;
             return result;
         }
         else {
-            // we return the 2nd digit
+            // Return the 2nd digit (arbitrary)
 
             result.number = digit2;
             result.pos.x = finalRects[1].x + finalRects[1].width/2;
@@ -392,6 +270,13 @@ NumPos mostProbableNumber(cv::Mat image){
     }
 }
 
+/**
+ * @brief digitHelper Helper functions which crops the image.
+ * @param bigImage The wider image of the player.
+ * @param contour The contour of the digit to crop.
+ * @param rect The minimum rect which includes the number.
+ * @return The digit value corresponding to the image.
+ */
 int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect) {
     cv::Mat digitImage(rect.height, rect.width, CV_8U);
     for (int x = rect.x; x < rect.x + rect.width; x++){
@@ -410,13 +295,9 @@ int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect)
         }
     }
 
-    //qDebug() << digitImage.cols << digitImage.rows;
-    //cv::imshow("Output", digitImage);
-    //cv::waitKey(40000);
-
     std::vector<cv::Point> shiftedContour = contour;
 
-    for (int j = 0; j < shiftedContour.size(); j++){
+    for (unsigned int j = 0; j < shiftedContour.size(); j++){
         shiftedContour[j].x -= rect.x;
         shiftedContour[j].y -= rect.y;
     }
@@ -424,8 +305,13 @@ int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect)
     return mostProbableDigit(digitImage, shiftedContour);
 }
 
-int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour){
-
+/**
+ * @brief mostProbableDigit Outputs the most probable digit on an image.
+ * @param digitImage The image of the digit, in black and white.
+ * @param contour The contour of the digit.
+ * @return the most probable digit on an image.
+ */
+int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     cv::RotatedRect rect = cv::minAreaRect(contour);
 
     float angle = rect.angle;
@@ -437,17 +323,14 @@ int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour){
     }
 
     cv::Mat rotationMatrix = getRotationMatrix2D(rect.center, angle, 1.0);
-    cv::Mat rotated = numberImage.clone();
-    cv::Mat cropped = numberImage.clone();
+    cv::Mat rotated = digitImage.clone();
+    cv::Mat cropped = digitImage.clone();
 
-    warpAffine(numberImage, rotated, rotationMatrix, cv::Size(numberImage.size().width, 2*numberImage.size().height), cv::INTER_LANCZOS4);
+    warpAffine(digitImage, rotated, rotationMatrix, cv::Size(digitImage.size().width, 2*digitImage.size().height), cv::INTER_LANCZOS4);
     getRectSubPix(rotated, rectSize, rect.center, cropped);
 
     cv::Mat resized;
     cv::resize(cropped, resized, cv::Size(36, 45));
-
-//    cv::imshow("Output", resized);
-//    cv::waitKey(40000);
 
     cv::Mat skeleton = thinningGuoHall(resized);
     Skeleton ske(skeleton, resized);
@@ -455,6 +338,9 @@ int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour){
     return ske.mostProbableDigit();
 }
 
+/**
+ * @brief runOnDataSet Function that runs a set of images to test the number detection part.
+ */
 void runOnDataSet(){
     int success = 0;
     int fail = 0;

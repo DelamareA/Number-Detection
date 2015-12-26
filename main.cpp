@@ -5,7 +5,7 @@ using namespace cv;
 
 int loadAndRun();
 
-int main(int argc, char *argv[]){
+int main(){
     // Below is the code to generate the datasets to train the svms
 
     /*QList<int> all;
@@ -27,6 +27,10 @@ int main(int argc, char *argv[]){
     return loadAndRun();
 }
 
+/**
+ * @brief loadAndRun Main function that loads the config file, the images, the video and launches the frameProcess function.
+ * @return 0 iff the program terminates normally.
+ */
 int loadAndRun(){
     Config::setConfigFromFile("config.txt");
     cv::Mat background = cv::imread(Config::getBackgroundPath().toStdString());
