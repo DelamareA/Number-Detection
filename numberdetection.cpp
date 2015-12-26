@@ -155,7 +155,7 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
                 else {
                     cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
-                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] >= maxVoteL){
+                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 0 && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -8 && val[0] >= maxVoteL){
                         final.at<uchar>(y, x) = 255;
                     }
                     else {
@@ -289,8 +289,18 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
 
     for (unsigned int i = 0; i < contours.size(); i++){
         cv::Rect rect = minAreaRect(contours[i]).boundingRect();
-        double ratio = (double)rect.width / rect.height;
-        if (rect.width > jerseyRect.width * 0.25 && rect.width < jerseyRect.width * 0.9 && rect.height > jerseyRect.height * 0.3 && rect.height < jerseyRect.height * 0.8 && ratio > 0.5 && ratio < 1.3 && contourArea(contours[i]) > image.rows * image.rows * 0.01){
+        cv::RotatedRect rotatedRect = minAreaRect(contours[i]);
+
+        if (rotatedRect.size.width > rotatedRect.size.height){
+            cv::swap(rotatedRect.size.width, rotatedRect.size.height);
+        }
+        double ratio = (double)rotatedRect.size.width / rotatedRect.size.height;
+        if (rotatedRect.size.width > jerseyRect.width * 0.15
+                && rotatedRect.size.width < jerseyRect.width * 0.9
+                && rotatedRect.size.height > jerseyRect.height * 0.3
+                && rotatedRect.size.height < jerseyRect.height * 0.8
+                && ratio > 0.4 && ratio < 1.3
+                && contourArea(contours[i]) > image.rows * image.rows * 0.015){
 
             if (rect.x < 0){
                 rect.x = 0;
