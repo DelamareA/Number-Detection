@@ -8,10 +8,10 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     cv::Mat imageTransformed = image;
     cv::Mat blurredImage;
     cv::Mat imageHue;
-    cv::Mat blurredImageHue;
     cv::Mat backgroundMask1;
     cv::Mat grayScaleImage;
     cv::Mat blurredBackground;
+    cv::Mat blurredImageHue;
     GaussianBlur(background, blurredBackground, cv::Size(3, 3), 0, 0);
     GaussianBlur(image, blurredImage, cv::Size(3, 3), 0, 0);
     cvtColor(image, grayScaleImage, CV_BGR2GRAY);
@@ -25,14 +25,12 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
 
     int maxBackgroundColorDistance = Configuration::getMaxBackgroundColorDistance();
 
-    for (int x = 0; x < backgroundMask1.cols; x++){
-        for (int y = 0; y < backgroundMask1.rows; y++){
-            cv::Vec3b intensity = blurredImage.at<cv::Vec3b>(y, x);
-            cv::Vec3b backgroundPixel = blurredBackground.at<cv::Vec3b>(y, x);
+    for (int y = 0; y < backgroundMask1.rows; y++){
+        cv::Vec3b* rowImage = blurredImage.ptr<cv::Vec3b>(y);
+        cv::Vec3b* rowBackground = blurredBackground.ptr<cv::Vec3b>(y);
+        for (int x = 0; x < backgroundMask1.cols; x++){
 
-            int distBackground = colorDistance(backgroundPixel, intensity);
-
-            if (distBackground < maxBackgroundColorDistance){
+            if (colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance){
                 backgroundMask1.at<uchar>(y, x) = 0;
             }
             else {
@@ -41,10 +39,13 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
         }
     }
 
-    int dilateSize = 2;
+    int dilateSize = 3;
     cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
     cv::erode(backgroundMask1, backgroundMask1, dilateElement);
     cv::dilate(backgroundMask1, backgroundMask1, dilateElement);
+
+    cv::dilate(backgroundMask1, backgroundMask1, dilateElement);
+    cv::erode(backgroundMask1, backgroundMask1, dilateElement);
 
     cv::Mat backgroundMask2 = backgroundMask1;
 
@@ -89,36 +90,36 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
 
     // just to display the image
 
-    cv::Mat backgroundFilteredImage = backgroundMask2.clone();
-    cv::Mat backgroundFilteredImageColor = image.clone();
+//    cv::Mat backgroundFilteredImage = backgroundMask2.clone();
+//    cv::Mat backgroundFilteredImageColor = image.clone();
 
     cv::Vec3b black;
     black[0] = 0;
     black[1] = 0;
     black[2] = 0;
-    for (int x = 0; x < backgroundFilteredImage.cols; x++){
-        for (int y = 0; y < backgroundFilteredImage.rows; y++){
-            if (backgroundMask2.at<uchar>(y, x) == 255){
-                backgroundFilteredImage.at<uchar>(y, x) = 0;
-                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
-                for (int i = 0; i < backgroundFilteredContours.size(); i++){
-                    if (pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 5 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height){
-                        backgroundFilteredImage.at<uchar>(y, x) = 255;
-                        backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = image.at<cv::Vec3b>(y,x);
-                    }
-                }
-            }
-            else {
-                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
-            }
-        }
-    }
+//    for (int x = 0; x < backgroundFilteredImage.cols; x++){
+//        for (int y = 0; y < backgroundFilteredImage.rows; y++){
+//            if (backgroundMask2.at<uchar>(y, x) == 255){
+//                backgroundFilteredImage.at<uchar>(y, x) = 0;
+//                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
+//                for (int i = 0; i < backgroundFilteredContours.size(); i++){
+//                    if (pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 3 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height){
+//                        backgroundFilteredImage.at<uchar>(y, x) = 255;
+//                        backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = image.at<cv::Vec3b>(y,x);
+//                    }
+//                }
+//            }
+//            else {
+//                backgroundFilteredImageColor.at<cv::Vec3b>(y,x) = black;
+//            }
+//        }
+//    }
 
     for (int i = 0; i < listPlayerImages.size(); i++){
         for (int x = backgroundFilteredRects[i].x; x < backgroundFilteredRects[i].x + backgroundFilteredRects[i].width; x++){
             for (int y = backgroundFilteredRects[i].y; y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height; y++){
                 if (backgroundMask2.at<uchar>(y, x) == 255){
-                    if (!(pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 5 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height)){
+                    if (!(pointPolygonTest(backgroundFilteredContours[i], cv::Point2f(x, y), true) >= 3 && y >= backgroundFilteredRects[i].y && y < backgroundFilteredRects[i].y + backgroundFilteredRects[i].height)){
                         listPlayerImages[i].at<cv::Vec3b>(y-backgroundFilteredRects[i].y, x-backgroundFilteredRects[i].x) = black;
                     }
                 }
@@ -128,11 +129,11 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
             }
         }
 //        cv::imshow("Output", listPlayerImages[i]);
-//        cv::waitKey(40000);
+//        cv::waitKey(10);
     }
 
 //    cv::imshow("Output", backgroundMask1);
-//    cv::waitKey(40000);
+//    cv::waitKey(1);
 
     Output* output = new Output(image);
 

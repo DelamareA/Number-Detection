@@ -15,9 +15,9 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     cvtColor(image, final, CV_BGR2GRAY);
 
     cv::Mat colorSeg;
-    cv::Mat colorSegHSV;
-    pyrMeanShiftFiltering(labImage, colorSegHSV, 20, 20, 1); // change name later
-    cvtColor(colorSegHSV, colorSeg, CV_Lab2BGR);
+    cv::Mat colorSegLab;
+    pyrMeanShiftFiltering(labImage, colorSegLab, 18, 18, 1);
+    cvtColor(colorSegLab, colorSeg, CV_Lab2BGR);
 
     int histo[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
     int widerHisto[255/BIN_SIZE][255/BIN_SIZE][255/BIN_SIZE];
@@ -35,7 +35,7 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     int maxL = 0;
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
-            cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
+            cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
             if (val[0]/BIN_SIZE != 0 || val[1]/BIN_SIZE != 128/BIN_SIZE || val[2]/BIN_SIZE != 128/BIN_SIZE){ // black pixels dont count
                 histo[val[0]/BIN_SIZE][val[1]/BIN_SIZE][val[2]/BIN_SIZE]++;
@@ -69,18 +69,18 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         }
     }
 
-    int maxH = 0;
-    int maxS = 0;
-    int maxV = 0;
+    int maxVoteL = 0;
+    int maxVoteA= 0;
+    int maxVoteB = 0;
     int maxVote = 0;
     for (int i = 0; i < 255 / BIN_SIZE; i++){
         for (int j = 0; j < 255 / BIN_SIZE; j++){
             for (int k = 0; k < 255 / BIN_SIZE; k++){
                 if (histo[i][j][k] > maxVote){
                     maxVote = histo[i][j][k];
-                    maxH = i * BIN_SIZE + BIN_SIZE / 2;
-                    maxS = j * BIN_SIZE + BIN_SIZE / 2;
-                    maxV = k * BIN_SIZE + BIN_SIZE / 2;
+                    maxVoteL = i * BIN_SIZE + BIN_SIZE / 2;
+                    maxVoteA = j * BIN_SIZE + BIN_SIZE / 2;
+                    maxVoteB = k * BIN_SIZE + BIN_SIZE / 2;
 
 //                    qDebug() << "Vote : " << maxVote;
 //                    qDebug() << "Temp : " << maxH * (BIN_SIZE * 360 / 255) << maxS * (BIN_SIZE * 100 / 255) << maxV * (BIN_SIZE * 100 / 255);
@@ -89,22 +89,18 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         }
     }
 
-    qDebug() << "Values : " << maxH * 100 / 255 << maxS - 128 << maxV - 128;
+    qDebug() << "Values : " << maxVoteL * 100 / 255 << maxVoteA - 128 << maxVoteB - 128;
     //qDebug() << "Indices : " << (maxH - BIN_SIZE / 2) / BIN_SIZE << (maxS - BIN_SIZE / 2) / BIN_SIZE << (maxV - BIN_SIZE / 2) / BIN_SIZE;
 
-    double th = 1;
-    double ts = 1;
-    double tv = 1;
-
-    if (maxH > 255 - th * BIN_SIZE){
-        maxH -= 255;
-    }
+    double tL = 20;
+    double tA = 20;
+    double tB = 20;
 
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
-            cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
+            cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
-            if (((val[0] > maxH - th * BIN_SIZE && val[0] < maxH + th * BIN_SIZE) || (val[0] - 255 > maxH - th * BIN_SIZE && val[0] - 255 < maxH + th * BIN_SIZE)) && val[1] > maxS - ts * BIN_SIZE && val[1] < maxS + ts * BIN_SIZE && val[2] > maxV - tv * BIN_SIZE && val[2] < maxV + tv * BIN_SIZE){
+            if (abs(val[0] - maxVoteL) < tL && abs(val[1] - maxVoteA) < tA && abs(val[2] - maxVoteB) < tB){
                 jerseyFinal.at<uchar>(y, x) = 255;
             }
             else {
@@ -113,12 +109,17 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         }
     }
 
+    cv::Mat jerseyFinalEroded;
+    int dilateSize = 1;
+    cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
+    cv::erode(jerseyFinal, jerseyFinalEroded, dilateElement);
+
     std::vector<std::vector<cv::Point> > jerseyContours;
     std::vector<cv::Vec4i> jerseyHierarchy;
 
     cv::Rect jerseyRect;
 
-    findContours(jerseyFinal.clone(), jerseyContours, jerseyHierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+    findContours(jerseyFinalEroded, jerseyContours, jerseyHierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     if (jerseyContours.size() < 1){
         qDebug() << "Error, 0 shirt detected";
@@ -133,50 +134,28 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         std::vector<cv::Point> trueJerseyContour = jerseyContours[0];
 
         for (int i = 0; i < jerseyContours.size(); i++){
-            if (minAreaRect(jerseyContours[i]).boundingRect().height > minAreaRect(trueJerseyContour).boundingRect().height){
+            if (minAreaRect(jerseyContours[i]).boundingRect().area() > minAreaRect(trueJerseyContour).boundingRect().area()){
                 trueJerseyContour = jerseyContours[i];
             }
         }
 
-        std::vector<cv::Point> approximateContour;
-
-        cv::approxPolyDP(cv::Mat(trueJerseyContour), approximateContour, 3, true );
-
-        std::vector<cv::Vec4i> defect;
-        std::vector<int> hull;
+        bool isJerseyValid = (minAreaRect(trueJerseyContour).boundingRect().height > image.rows * 0.7);
 
         std::vector<cv::Point> convexContour;
 
         cv::convexHull(trueJerseyContour, convexContour, false, true);
-        //cv::convexityDefects(trueJerseyContour, convexHull, defect);
 
         jerseyRect = cv::minAreaRect(convexContour).boundingRect();
 
-        std::vector<cv::Point> convexJerseyContour;
-        for (int i = 0; i < defect.size(); i++){
-            convexJerseyContour.push_back(trueJerseyContour[defect[i][0]]);
-            convexJerseyContour.push_back(trueJerseyContour[defect[i][1]]);
-        }
-
-        if (convexJerseyContour.size() == 0){
-            convexJerseyContour = trueJerseyContour;
-        }
-        else {
-            convexJerseyContour.push_back(trueJerseyContour[defect[defect.size()-1][1]]);
-        }
-
-        std::vector<std::vector<cv::Point> > temp;
-        temp.push_back(convexContour);
-
         for (int x = 0; x < jerseyFinal.cols; x++){
             for (int y = 0; y < jerseyFinal.rows; y++){
-                if (jerseyFinal.at<uchar>(y, x) == 255){
+                if (jerseyFinal.at<uchar>(y, x) == 255 || !isJerseyValid){
                     final.at<uchar>(y, x) = 0;
                 }
                 else {
-                    cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
+                    cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
-                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] >= maxH){
+                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] >= maxVoteL){
                         final.at<uchar>(y, x) = 255;
                     }
                     else {
@@ -185,6 +164,10 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
                 }
             }
         }
+
+        // Code to show the contour
+        std::vector<std::vector<cv::Point> > temp;
+        temp.push_back(convexContour);
 
         cv::Scalar color = cv::Scalar(0, 0, 255);
         cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
@@ -290,8 +273,10 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
         }
     }*/
 
-
 //    cv::imshow("Output", colorSeg);
+//    cv::waitKey(40000);
+
+//    cv::imshow("Output", final);
 //    cv::waitKey(40000);
 
     std::vector<std::vector<cv::Point> > contours;
@@ -305,7 +290,7 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     for (unsigned int i = 0; i < contours.size(); i++){
         cv::Rect rect = minAreaRect(contours[i]).boundingRect();
         double ratio = (double)rect.width / rect.height;
-        if (rect.width > jerseyRect.width * 0.25 && rect.width < jerseyRect.width * 0.9 && rect.height > jerseyRect.height * 0.3 && rect.height < jerseyRect.height * 0.8 && ratio > 0.5 && ratio < 1.5){
+        if (rect.width > jerseyRect.width * 0.25 && rect.width < jerseyRect.width * 0.9 && rect.height > jerseyRect.height * 0.3 && rect.height < jerseyRect.height * 0.8 && ratio > 0.5 && ratio < 1.3 && contourArea(contours[i]) > image.rows * image.rows * 0.01){
 
             if (rect.x < 0){
                 rect.x = 0;
