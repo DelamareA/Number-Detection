@@ -1,6 +1,6 @@
+#include <QDebug>
 #include "headers.h"
 #include "config.h"
-#include <QDebug>
 
 #define BIN_SIZE 20
 

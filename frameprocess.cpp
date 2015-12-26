@@ -1,8 +1,9 @@
+#include <QDebug>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/background_segm.hpp>
-#include "headers.h"
 #include <vector>
+#include "headers.h"
 
 Output* frameProcess(cv::Mat image, cv::Mat background){
     cv::Mat imageTransformed = image;
@@ -54,9 +55,9 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
 
     findContours(backgroundMask1.clone(), backgroundContours, backgroundHierarchy, CV_RETR_EXTERNAL , CV_CHAIN_APPROX_NONE);
 
-    QVector<cv::Rect> backgroundFilteredRects;
-    QVector<std::vector<cv::Point> > backgroundFilteredContours;
-    QVector<cv::Mat> listPlayerImages;
+    QList<cv::Rect> backgroundFilteredRects;
+    QList<std::vector<cv::Point> > backgroundFilteredContours;
+    QList<cv::Mat> listPlayerImages;
 
     for (unsigned int i = 0; i < backgroundContours.size(); i++){
         cv::Rect rect = minAreaRect(backgroundContours[i]).boundingRect();
@@ -137,7 +138,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
 
     Output* output = new Output(image);
 
-    QVector<cv::Mat> listPlayerImagesNumbers;
+    QList<cv::Mat> listPlayerImagesNumbers;
 
     for (int i = 0; i < listPlayerImages.size(); i++){
         listPlayerImagesNumbers.push_back(listPlayerImages[i].clone());

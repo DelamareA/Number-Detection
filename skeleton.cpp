@@ -1,7 +1,5 @@
-#include "skeleton.h"
 #include <QDebug>
-
-
+#include "skeleton.h"
 
 Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
 
@@ -350,215 +348,46 @@ int Skeleton::mostProbableDigit(){
     QList<int> list;
     QSet<int> digitsOnField = Config::getDigitsOnField();
 
-    /*if (listHoles.size() > 2 || listJunctions.size() > 5 || listLineEnds.size() > 5){
-        // certainly a bad 'catch'
+    int dim = VECTOR_DIMENSION;
+
+    QList<double> vect = vectorization();
+
+    float sampleData[dim];
+
+    for (int i = 0; i < dim; i++){
+        sampleData[i] = vect[i];
     }
-    if (listHoles.size() == 0){
-        if (listLineEnds.size() >= 2){
-            if (listLineEnds[0].x < 0.3 && listLineEnds[0].y < 0.3 && listLineEnds[1].x > 0.7 && listLineEnds[1].y > 0.7){
-                list.push_back(2);
-            }
-            else if (listLineEnds[0].x > 0.7 && listLineEnds[0].y < 0.3 && listLineEnds[1].y > 0.5){
-                list.push_back(5);
-            }
-            else if (listLineEnds[1].x < 0.4){
-                list.push_back(7);
-            }
-            else {
-                list.push_back(1);
-            }
-        }
-        else {
-            list.push_back(1);
-            list.push_back(2);
-            list.push_back(5);
-            list.push_back(7);
-        }
-    }
-    else if (listHoles.size() == 1){
-        if (listHoles[0].x > 0.35 && listHoles[0].x < 0.65 && listHoles[0].y > 0.35 && listHoles[0].y < 0.65){
-            if (listJunctions.size() + listLineEnds.size() < 3){
-                list.push_back(0);
-            }
-            else {
-                list.push_back(4);
-            }
-        }
-        else if (listHoles.size() == 1 && listJunctions.size() >= 1 && listLineEnds.size() >= 1){
-            if (listHoles[0].y > listLineEnds[0].y){
-                list.push_back(6);
-            }
-            else {
-                list.push_back(9);
-            }
-        }
-        else {
-            list.push_back(0);
-            list.push_back(4);
-            list.push_back(6);
-            list.push_back(9);
-        }
-    }
-    else if (listHoles.size() == 2){
-        list.push_back(8);
-    }
-    else { // if the 'number' is close to a 'normal' number, but not a perfect match, we try all of them
-        for (int i = 0; i < TEMPLATES_COUNT; i++){
-            list.push_back(i);
-        }
-    }*/
 
-    if (HOLE_SEPARATION){
-        if (listHoles.size() == 0){
-            QList<int> zeroHole;
-            zeroHole.push_back(1);
-            zeroHole.push_back(2);
-            zeroHole.push_back(3);
-            zeroHole.push_back(5);
-            zeroHole.push_back(7);
+    cv::Mat sampleMat(1, dim, CV_32FC1, sampleData);
 
-            int dim = Skeleton::getDim(M0);
+    int maxVote = 0;
+    int intMaxVote = -1;
 
-            QList<double> vect = vectorization(M0);
+    for (int i = 0; i < 10; i++){
+        int vote = 0;
+        for (int j = 0; j < 10; j++){
+            if (i != j && digitsOnField.contains(i) && digitsOnField.contains(j)) {
+                float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
 
-            float sampleData[dim];
-
-            for (int i = 0; i < dim; i++){
-                sampleData[i] = vect[i];
-            }
-
-            cv::Mat sampleMat(1, dim, CV_32FC1, sampleData);
-
-            int maxVote = 0;
-            int intMaxVote = -1;
-
-            for (int i = 0; i < 10; i++){
-                int vote = 0;
-                for (int j = 0; j < 10; j++){
-                    if (i != j && zeroHole.contains(i) && zeroHole.contains(j)){
-                        float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
-
-                        if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
-                            vote++;
-                        }
-                    }
-                }
-
-                //qDebug() << i << ": " << vote;
-
-                if (vote > maxVote){
-                    maxVote = vote;
-                    intMaxVote = i;
+                if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
+                    vote++;
                 }
             }
-
-            if (intMaxVote == -1){
-                qDebug() << "Error : No vote is greater than 0";
-            }
-            else {
-                list.push_back(intMaxVote);
-            }
         }
-        else if (listHoles.size() == 1){
-            QList<int> oneHole;
-            oneHole.push_back(0);
-            oneHole.push_back(4);
-            oneHole.push_back(6);
-            oneHole.push_back(9);
 
-            int dim = Skeleton::getDim(M1);
+        //qDebug() << i << ": " << vote;
 
-            QList<double> vect = vectorization(M1);
-
-            float sampleData[dim];
-
-            for (int i = 0; i < dim; i++){
-                sampleData[i] = vect[i];
-            }
-
-            cv::Mat sampleMat(1, dim, CV_32FC1, sampleData);
-
-            int maxVote = 0;
-            int intMaxVote = -1;
-
-            for (int i = 0; i < 10; i++){
-                int vote = 0;
-                for (int j = 0; j < 10; j++){
-                    if (i != j && oneHole.contains(i) && oneHole.contains(j)){
-                        float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
-
-                        if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
-                            vote++;
-                        }
-                    }
-                }
-
-                //qDebug() << i << ": " << vote;
-
-                if (vote > maxVote){
-                    maxVote = vote;
-                    intMaxVote = i;
-                }
-            }
-
-            if (intMaxVote == -1){
-                qDebug() << "Error : No vote is greater than 0";
-            }
-            else {
-                list.push_back(intMaxVote);
-            }
+        if (vote > maxVote){
+            maxVote = vote;
+            intMaxVote = i;
         }
-        else if (listHoles.size() == 2){
-            list.push_back(8);
-        }
-        else { // if the 'number' is close to a 'normal' number, but not a perfect match, we try all of them
-            for (int i = 0; i < TEMPLATES_COUNT; i++){
-                list.push_back(i);
-            }
-        }
+    }
+
+    if (intMaxVote == -1){
+        qDebug() << "Error : No vote is greater than 0";
     }
     else {
-        int dim = Skeleton::getDim(M0);
-
-        QList<double> vect = vectorization(M0);
-
-        float sampleData[dim];
-
-        for (int i = 0; i < dim; i++){
-            sampleData[i] = vect[i];
-        }
-
-        cv::Mat sampleMat(1, dim, CV_32FC1, sampleData);
-
-        int maxVote = 0;
-        int intMaxVote = -1;
-
-        for (int i = 0; i < 10; i++){
-            int vote = 0;
-            for (int j = 0; j < 10; j++){
-                if (i != j && digitsOnField.contains(i) && digitsOnField.contains(j)) {
-                    float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
-
-                    if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
-                        vote++;
-                    }
-                }
-            }
-
-            //qDebug() << i << ": " << vote;
-
-            if (vote > maxVote){
-                maxVote = vote;
-                intMaxVote = i;
-            }
-        }
-
-        if (intMaxVote == -1){
-            qDebug() << "Error : No vote is greater than 0";
-        }
-        else {
-            list.push_back(intMaxVote);
-        }
+        list.push_back(intMaxVote);
     }
 
     if (list.isEmpty()){
@@ -569,24 +398,16 @@ int Skeleton::mostProbableDigit(){
     }
 }
 
-QList<double> Skeleton::vectorization(int type) {
+QList<double> Skeleton::vectorization() {
     QList<double> result;
-
-    int count = getDim(type);
-    int endCount = getEndCount(type);
-    int junctionCount = getJunctionCount(type);
-    int holeCount = getHoleCount(type);
-    int massCenterCount = getMassCenterCount(type);
-    int totalCount = getTotalCount(type);
-    int partCount = getPartCount(type);
 
     int index = 0;
 
-    for (int i = 0; i < count; i++){
+    for (int i = 0; i < VECTOR_DIMENSION; i++){
         result.push_back(0.0001);
     }
 
-    for (int i = 0; i < listLineEnds.size() && i < endCount; i++){
+    for (int i = 0; i < listLineEnds.size() && i < END_COUNT; i++){
         result[index] = (listLineEnds[i].x);
         index++;
 
@@ -594,7 +415,7 @@ QList<double> Skeleton::vectorization(int type) {
         index++;
     }
 
-    for (int i = 0; i < listJunctions.size() && i < junctionCount; i++){
+    for (int i = 0; i < listJunctions.size() && i < JUNCTION_COUNT; i++){
         result[index] = (listJunctions[i].x);
         index++;
 
@@ -602,7 +423,7 @@ QList<double> Skeleton::vectorization(int type) {
         index++;
     }
 
-    for (int i = 0; i < listHoles.size() && i < holeCount; i++){
+    for (int i = 0; i < listHoles.size() && i < HOLE_COUNT; i++){
         result[index] = (listHoles[i].x);
         index++;
 
@@ -610,7 +431,7 @@ QList<double> Skeleton::vectorization(int type) {
         index++;
     }
 
-    for (int i = 0; i < massCenterCount; i++){
+    for (int i = 0; i < MASS_CENTER_COUNT; i++){
         result[index] = (massCenter.x);
         index++;
 
@@ -618,12 +439,12 @@ QList<double> Skeleton::vectorization(int type) {
         index++;
     }
 
-    for (int i = 0; i < totalCount; i++){
+    for (int i = 0; i < TOTAL_COUNT; i++){
         result[index] = (total);
         index++;
     }
 
-    for (int i = 0; i < partCount; i++){
+    for (int i = 0; i < PARTS_COUNT; i++){
         for (int x = 0; x < PART_X; x++){
             for (int y = 0; y < PART_Y; y++){
                 result[index] = parts[x][y];
@@ -706,77 +527,6 @@ void Skeleton::setParts(cv::Mat ske){
         for (int y = 0; y < PART_Y; y++){
             parts[x][y] = min(parts[x][y] * 20, 1.0);
         }
-    }
-}
-
-
-int Skeleton::getDim(int type){
-    switch(type){
-        case M0 :
-        return VECTOR_DIMENSION_0;
-
-         default :
-        return VECTOR_DIMENSION_1;
-    }
-}
-
-int Skeleton::getEndCount(int type){
-    switch(type){
-        case M0 :
-        return END_0;
-
-         default :
-        return END_1;
-    }
-}
-
-int Skeleton::getJunctionCount(int type){
-    switch(type){
-        case M0 :
-        return JUNCTION_0;
-
-         default :
-        return JUNCTION_1;
-    }
-}
-
-int Skeleton::getHoleCount(int type){
-    switch(type){
-        case M0 :
-        return HOLE_0;
-
-         default :
-        return HOLE_1;
-    }
-}
-
-int Skeleton::getMassCenterCount(int type){
-    switch(type){
-        case M0 :
-        return MASS_CENTER_0;
-
-         default :
-        return MASS_CENTER_1;
-    }
-}
-
-int Skeleton::getTotalCount(int type){
-    switch(type){
-        case M0 :
-        return TOTAL_0;
-
-         default :
-        return TOTAL_1;
-    }
-}
-
-int Skeleton::getPartCount(int type){
-    switch(type){
-        case M0 :
-        return PARTS_0;
-
-         default :
-        return PARTS_1;
     }
 }
 

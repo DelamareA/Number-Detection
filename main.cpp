@@ -1,5 +1,3 @@
-#include <QFile>
-#include <QTextStream>
 #include <QDebug>
 #include "headers.h"
 

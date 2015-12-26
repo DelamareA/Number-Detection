@@ -1,10 +1,10 @@
 #ifndef SKELETON_H
 #define SKELETON_H
 
-#include <opencv2/opencv.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
+#include <QSet>
 #include <QList>
-
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "headers.h"
 
 #define MERGE_DISTANCE 0.05
@@ -15,30 +15,19 @@
 #define PART_X 7
 #define PART_Y 10
 
-#define END_0 0
-#define END_1 1
+#define END_COUNT 0
 
-#define JUNCTION_0 0
-#define JUNCTION_1 0
+#define JUNCTION_COUNT 0
 
-#define HOLE_0 0
-#define HOLE_1 0
+#define HOLE_COUNT 0
 
-#define MASS_CENTER_0 0
-#define MASS_CENTER_1 0
+#define MASS_CENTER_COUNT 0
 
-#define TOTAL_0 10000
-#define TOTAL_1 0
+#define TOTAL_COUNT 10000
 
-#define PARTS_0 1
-#define PARTS_1 1
+#define PARTS_COUNT 1
 
-#define VECTOR_DIMENSION_0 (2*END_0 + 2*JUNCTION_0 + 2*HOLE_0 + 2*MASS_CENTER_0 + TOTAL_0 + PART_X*PART_Y*PARTS_0)
-#define VECTOR_DIMENSION_1 (2*END_1 + 2*JUNCTION_1 + 2*HOLE_1 + 2*MASS_CENTER_1 + TOTAL_1 + PART_X*PART_Y*PARTS_1)
-
-#define HOLE_SEPARATION 0
-
-enum {M0, M1};
+#define VECTOR_DIMENSION (2*END_COUNT + 2*JUNCTION_COUNT + 2*HOLE_COUNT + 2*MASS_CENTER_COUNT + TOTAL_COUNT + PART_X*PART_Y*PARTS_COUNT)
 
 struct LabeledPoint {
     int label;
@@ -56,18 +45,10 @@ class Skeleton {
         double max(double a, double b);
         int min(int a, int b);
         int max(int a, int b);
-        QList<double> vectorization(int type);
+        QList<double> vectorization();
         cv::Point2d getMassCenter(cv::Mat ske);
         double getCount(cv::Mat ske);
         void setParts(cv::Mat ske);
-
-        static int getDim(int type);
-        static int getEndCount(int type);
-        static int getJunctionCount(int type);
-        static int getHoleCount(int type);
-        static int getMassCenterCount(int type);
-        static int getTotalCount(int type);
-        static int getPartCount(int type);
 
     private:
         QList<LabeledPoint> startList;

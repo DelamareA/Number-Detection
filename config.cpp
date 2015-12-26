@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "config.h"
 
 bool Config::isVideo = false;

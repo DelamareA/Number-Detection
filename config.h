@@ -4,7 +4,6 @@
 #include <QString>
 #include <QFile>
 #include <QTextStream>
-#include <QDebug>
 #include <QSet>
 #include <opencv2/opencv.hpp>
 

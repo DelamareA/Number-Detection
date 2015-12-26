@@ -9,7 +9,6 @@
 #include <qglobal.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
 #include "headers.h"
 
 using namespace cv;
@@ -140,7 +139,7 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 }
 
 
-void generateSVM(QString path, int type){
+void generateSVM(QString path){
     QFile file(path + "labels.txt");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)){
         qDebug() << "Cannot open " + path + "labels.txt";
@@ -152,7 +151,7 @@ void generateSVM(QString path, int type){
 
     int count = labelsString[0].toInt();
 
-    int dim = Skeleton::getDim(type);
+    int dim = VECTOR_DIMENSION;
 
     float labels[count];
     float* trainingData = new float[count * dim];
@@ -169,7 +168,7 @@ void generateSVM(QString path, int type){
 
         cv::imwrite((path + "skeletons/" + QString::number(i) + ".png").toStdString(), skeleton);
 
-        QList<double> vect = ske.vectorization(type);
+        QList<double> vect = ske.vectorization();
 
         labels[i] = labelsString[i+1].toInt();
         for (int j = 0; j < dim; j++){
@@ -190,56 +189,4 @@ void generateSVM(QString path, int type){
     svm->save((path + "svm.xml").toStdString());
 
     delete trainingData;
-}
-
-void generateJerseySVM(QString path){
-    int count = 1;
-    int dim = 3;
-
-    QVector<float> labelsVector;
-    QVector<cv::Vec3b> trainingDataVector;
-
-    for (int i = 0; i < count; i++){
-        cv::Mat image = cv::imread((path + "dataset/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_COLOR);
-        cv::Mat mask = cv::imread((path + "mask/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_COLOR);
-
-        for (int x = 0; x < image.cols; x++){
-            for (int y = 0; y < image.rows; y++){
-                trainingDataVector.push_back(image.at<cv::Vec3b>(y, x));
-
-                cv::Vec3b intensity = mask.at<cv::Vec3b>(y, x);
-
-                if (intensity[0] == 255 && intensity[1] == 255 && intensity[2] == 255){
-                    labelsVector.push_back(1);
-                }
-                else {
-                    labelsVector.push_back(0);
-                }
-            }
-        }
-    }
-
-    float labels[labelsVector.size()];
-    float trainingData[trainingDataVector.size()][dim];
-
-    for (int i = 0; i < labelsVector.size(); i++){
-        labels[i] = labelsVector[i];
-    }
-
-    for (int i = 0; i < trainingDataVector.size(); i++){
-        trainingData[i][0] = trainingDataVector[i][0];
-        trainingData[i][1] = trainingDataVector[i][1];
-        trainingData[i][2] = trainingDataVector[i][2];
-    }
-
-    Mat labelsMat(labelsVector.size(), 1, CV_32SC1, labels);
-    Mat trainingDataMat(trainingDataVector.size(), dim, CV_32FC1, trainingData);
-
-    Ptr<ml::SVM> svm = ml::SVM::create();
-
-    Ptr<TrainData> data = TrainData::create(trainingDataMat, ROW_SAMPLE, labelsMat);
-
-    svm->setKernel(cv::ml::SVM::LINEAR);
-    svm->trainAuto(data);
-    svm->save((path + "svm.xml").toStdString());
 }

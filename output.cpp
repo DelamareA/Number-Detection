@@ -1,6 +1,5 @@
 #include "output.h"
 
-
 Output::Output(cv::Mat image){
     //cvtColor(image, baseImage, CV_GRAY2BGR);
     baseImage = image;

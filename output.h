@@ -3,7 +3,7 @@
 
 #include <QList>
 #include <opencv2/opencv.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
 
 #define MERGE_DISTANCE_X 50
 #define MERGE_DISTANCE_Y 20

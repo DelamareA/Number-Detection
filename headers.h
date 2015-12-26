@@ -1,19 +1,10 @@
 #ifndef FUNCTIONS
 #define FUNCTIONS
 
+#include <opencv2/core.hpp>
 #include "output.h"
-#include "template.h"
 #include "skeleton.h"
 #include "config.h"
-#include <opencv2/core.hpp>
-
-#define MODULES_COUNT 5
-#define FUNCTIONS_COUNT 1
-#define ROTATION_STEP 10
-#define ROTATION_MAX 30
-#define ROTATION_COUNT (2*ROTATION_MAX/ROTATION_STEP + 1)
-
-enum {TEMPLATE_MATCHING, CENTER_MASS, HALVES_CENTER_MASS_VERTI, HALVES_CENTER_MASS_HORI, HISTOGRAMS};
 
 struct NumPos {
     int number;
@@ -37,8 +28,7 @@ cv::Mat thinningGuoHall(cv::Mat image);
 void thinningGuoHallIteration(cv::Mat& im, int iter);
 
 void generateDataSet(QList<int> numbers, int countPerNumber, int width, int height, QString outputPath);
-void generateSVM(QString path, int type);
-void generateJerseySVM(QString path);
+void generateSVM(QString path);
 
 NumPos mostProbableNumber(cv::Mat image);
 int mostProbableDigit(cv::Mat numberImage, std::vector<cv::Point> contour);
