@@ -5,6 +5,12 @@
 #include <vector>
 #include "headers.h"
 
+/**
+ * @brief frameProcess Main function that extract numbers from a frame.
+ * @param image The image where the numbers are.
+ * @param background The background image.
+ * @return An Output containing all info concerning this frame.
+ */
 Output* frameProcess(cv::Mat image, cv::Mat background){
     cv::Mat blurredImage;
     cv::Mat blurredBackground;
@@ -148,6 +154,12 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
     return output;
 }
 
+/**
+ * @brief colorDistance Returns the distance between two three-channels colors.
+ * @param c1 The first color.
+ * @param c2 The second color.
+ * @return the distance between two colors.
+ */
 int colorDistance(cv::Vec3b c1, cv::Vec3b c2){
     int diff0 = c1[0] - c2[0];
     int diff1 = c1[1] - c2[1];
@@ -155,6 +167,13 @@ int colorDistance(cv::Vec3b c1, cv::Vec3b c2){
     return (int) sqrt((diff0 * diff0) + (diff1 * diff1) + (diff2 * diff2));
 }
 
+/**
+ * @brief closeGaps Close the small gaps in a black and white image. (Currently unused).
+ * @param image The image we want to process.
+ * @param patchSize The size of the neighbourhood.
+ * @param ratio The minimum ratio to make a pixel white.
+ * @return An image with gaps closed.
+ */
 cv::Mat closeGaps(cv::Mat image, int patchSize, double ratio){
     cv::Mat result = image.clone();
 
@@ -192,6 +211,12 @@ cv::Mat closeGaps(cv::Mat image, int patchSize, double ratio){
     return result;
 }
 
+/**
+ * @brief extractBackgroundFromVideo Extract the background image from a video file.
+ * @param fileName The name of the video file.
+ * @param maxFrames The maximum number of frames to cover.
+ * @return The background image of the video.
+ */
 cv::Mat extractBackgroundFromVideo(QString fileName, int maxFrames){
     cv::VideoCapture video(fileName.toStdString());
     cv::Mat background;
@@ -221,6 +246,13 @@ cv::Mat extractBackgroundFromVideo(QString fileName, int maxFrames){
     return background;
 }
 
+/**
+ * @brief extractBackgroundFromVideo2 Extract the background image from a video file.
+ * It uses much more memory than the first implementation, but is more precise.
+ * @param fileName The name of the video file.
+ * @param maxFrames The maximum number of frames to cover.
+ * @return The background image of the video.
+ */
 cv::Mat extractBackgroundFromVideo2(QString fileName, int maxFrames){
     cv::VideoCapture video(fileName.toStdString());
     cv::Mat background;
@@ -303,6 +335,11 @@ cv::Mat extractBackgroundFromVideo2(QString fileName, int maxFrames){
     return background;
 }
 
+/**
+ * @brief extractBackgroundFromFiles Extract the background image from several images.
+ * @param filesName The names of the images.
+ * @return The background image of the video.
+ */
 cv::Mat extractBackgroundFromFiles(QStringList filesName){
     cv::Mat* images;
     images = new cv::Mat[filesName.size()];
@@ -326,7 +363,11 @@ cv::Mat extractBackgroundFromFiles(QStringList filesName){
     return background;
 }
 
-
+/**
+ * @brief getMassCenterFromImage Returns the center of mass from a black and white image. (Currently unused).
+ * @param image The image we want to process.
+ * @return The image's center of mass.
+ */
 cv::Point2f getMassCenterFromImage(cv::Mat image){
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -344,31 +385,11 @@ cv::Point2f getMassCenterFromImage(cv::Mat image){
     }
 }
 
-cv::Mat getSkeleton(cv::Mat image){
-    cv::Mat img = image.clone();
-    threshold(img, img, 127, 255, cv::THRESH_BINARY);
-    cv::Mat skel(img.size(), CV_8UC1, cv::Scalar(0));
-    cv::Mat temp;
-    cv::Mat eroded;
-
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-
-    bool done;
-    do {
-      erode(img, eroded, element);
-      cv::dilate(eroded, temp, element); // temp = open(img)
-      cv::subtract(img, temp, temp);
-      cv::bitwise_or(skel, temp, skel);
-      eroded.copyTo(img);
-
-      done = (cv::countNonZero(img) == 0);
-    } while (!done);
-
-    return skel;
-}
-
-// TEMPORARY FUNCTIONS
-
+/**
+ * @brief thinningGuoHallIteration One iteration of the GuoHall algorithm.
+ * @param im The image to skeletonize.
+ * @param iter The current iteration.
+ */
 void thinningGuoHallIteration(cv::Mat& im, int iter) {
     cv::Mat marker = cv::Mat::zeros(im.size(), CV_8UC1);
 
@@ -399,6 +420,12 @@ void thinningGuoHallIteration(cv::Mat& im, int iter) {
     im &= ~marker;
 }
 
+/**
+ * @brief thinningGuoHall Implementation of the GuoHall algorithm for skeletoniazation.
+ * Many thanks to http://opencv-code.com/quick-tips/implementation-of-guo-hall-thinning-algorithm/
+ * @param image The image to skeletonize.
+ * @return A skeletonized version of the image.
+ */
 cv::Mat thinningGuoHall(cv::Mat image){
     cv::Mat im = image.clone();
     for (int i = 0; i < im.rows; i++){
