@@ -1,11 +1,7 @@
-#include <QApplication>
-#include <opencv2/opencv.hpp>
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
 #include "functions.h"
-#include "output.h"
-#include "configuration.h"
 
 using namespace cv;
 
@@ -13,9 +9,9 @@ int loadAndRun(QString imagePath, QString videoPath, QString outputVideoPath, bo
 
 int main(int argc, char *argv[]){
 
-    bool isVideo = false;
-    QString imagePath = "tempframes/4.png";
-    QString videoPath = "29.mp4";
+    bool isVideo = true;
+    QString imagePath = "tempframes/32.png";
+    QString videoPath = "28.mp4";
     QString outputVideoPath = "output.avi";
     QString templatesPath = "templatesNumber4/";
     QString outputPath = "output.txt";

@@ -92,8 +92,8 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     qDebug() << "Values : " << maxH * 100 / 255 << maxS - 128 << maxV - 128;
     //qDebug() << "Indices : " << (maxH - BIN_SIZE / 2) / BIN_SIZE << (maxS - BIN_SIZE / 2) / BIN_SIZE << (maxV - BIN_SIZE / 2) / BIN_SIZE;
 
-    double th = 1.3;
-    double ts = 0.5;
+    double th = 1;
+    double ts = 1;
     double tv = 1;
 
     if (maxH > 255 - th * BIN_SIZE){
@@ -176,7 +176,7 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
                 else {
                     cv::Vec3b val = colorSegHSV.at<cv::Vec3b>(y, x);
 
-                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] > maxL * 0.2){
+                    if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 4 && val[0] >= maxH){
                         final.at<uchar>(y, x) = 255;
                     }
                     else {
@@ -291,8 +291,8 @@ NumPos mostProbableNumber(cv::Mat image, QList<int> digitsOnField){
     }*/
 
 
-    cv::imshow("Output", colorSeg);
-    cv::waitKey(40000);
+//    cv::imshow("Output", colorSeg);
+//    cv::waitKey(40000);
 
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;

@@ -2,7 +2,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/background_segm.hpp>
 #include "functions.h"
-#include "configuration.h"
 #include <vector>
 
 Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat background, QList<int> digitsOnField){
@@ -20,8 +19,9 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
     cvtColor(blurredImage, blurredImageHue, CV_BGR2HSV);
     cvtColor(image, imageHue, CV_BGR2HSV);
 
-
+    // ------------------
     // EXTRACT BACKGROUND
+    // ------------------
 
     int maxBackgroundColorDistance = Configuration::getMaxBackgroundColorDistance();
 
@@ -43,6 +43,7 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
 
     int dilateSize = 2;
     cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
+    cv::erode(backgroundMask1, backgroundMask1, dilateElement);
     cv::dilate(backgroundMask1, backgroundMask1, dilateElement);
 
     cv::Mat backgroundMask2 = backgroundMask1;
@@ -60,8 +61,10 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
         cv::Rect rect = minAreaRect(backgroundContours[i]).boundingRect();
         if (rect.width > 40 && rect.height > 50){
 
+            //qDebug() << rect.y << rect.height;
+
             rect.y += rect.height * 0.2;
-            rect.height *= 0.4;
+            rect.height *= 0.3 * (rect.y / rect.height) / 3.6;
 
             if (rect.x < 0){
                 rect.x = 0;
@@ -127,6 +130,9 @@ Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat back
 //        cv::imshow("Output", listPlayerImages[i]);
 //        cv::waitKey(40000);
     }
+
+//    cv::imshow("Output", backgroundMask1);
+//    cv::waitKey(40000);
 
     Output* output = new Output(image);
 

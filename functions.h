@@ -1,11 +1,10 @@
 #ifndef FUNCTIONS
 #define FUNCTIONS
 
-
 #include "output.h"
 #include "template.h"
 #include "skeleton.h"
-
+#include "configuration.h"
 #include <opencv2/core.hpp>
 
 #define MODULES_COUNT 5
@@ -21,7 +20,7 @@ struct NumPos {
     cv::Point2i pos;
 };
 
-Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat background, QList<int> digitsOnField);
+Output* templateMatching(cv::Mat image, int modules[MODULES_COUNT], cv::Mat backgroundLab, QList<int> digitsOnField);
 
 Output* basicTemplateMatching(cv::Mat image, cv::Mat background, QList<int> digitsOnField);
 
