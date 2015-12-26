@@ -1,37 +1,26 @@
 #include "output.h"
 
 Output::Output(cv::Mat image){
-    //cvtColor(image, baseImage, CV_GRAY2BGR);
-    baseImage = image;
+    //cvtColor(image, baseImage, CV_GRAY2BGR); // Uncomment this line if the image is in black and white.
+    baseImage = image; // Comment this line if the image is in black and white.
 }
 
+/**
+ * @brief Output::addData Adds a new detected number on the frame.
+ * @param x The x position of the number.
+ * @param y The y position of the number.
+ * @param num The value of the number.
+ */
 void Output::addData(unsigned int x, unsigned int y, unsigned int num){
-
-    bool merged = false;
-    for (int i = 0; i < listX.size(); i++){
-        if (abs(x-listX[i]) < MERGE_DISTANCE_X && abs(y-listY[i]) < MERGE_DISTANCE_Y){
-            merged = true;
-
-            /*
-             * If the number on the left is a '1', then the real number must be
-             * greater than 10, otherwise, it is probably a mistake, so we discard it
-            */
-            if (num == 1 && x < listX[i]){
-                listNum[i] += 10;
-            }
-            else if (listNum[i] == 1 && x > listX[i]){
-                listNum[i] = 10 + num;
-            }
-        }
-    }
-
-    if (!merged){
-        listX.append(x);
-        listY.append(y);
-        listNum.append(num);
-    }
+    listX.append(x);
+    listY.append(y);
+    listNum.append(num);
 }
 
+/**
+ * @brief Output::getImage Returns the image with the numbers on it.
+ * @return the image with the detected numbers on it.
+ */
 cv::Mat Output::getImage(){
 
     for (int i = 0; i < listX.size(); i++){
@@ -56,6 +45,10 @@ cv::Mat Output::getImage(){
     return baseImage;
 }
 
+/**
+ * @brief Output::toString Returns a string-representation of the detected numbers.
+ * @return a string-representation of the detected numbers, in the same format as the evaluator.
+ */
 QString Output::toString(){
     QString out;
     out += QString::number(listX.size());

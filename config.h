@@ -11,6 +11,9 @@
 
 typedef cv::Ptr<cv::ml::SVM>* SVMs;
 
+/**
+ * @brief The Config class is used to contain all global information for the program.
+ */
 class Config {
     public:
 
