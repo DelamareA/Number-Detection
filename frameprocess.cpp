@@ -29,7 +29,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
         cv::Vec3b* rowBackground = blurredBackground.ptr<cv::Vec3b>(y);
         for (int x = 0; x < image.cols; x++){
 
-            if (colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance){
+            if (y < image.rows / 2.5 || colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance   ){
                 backgroundMask.at<uchar>(y, x) = 0;
             }
             else {
@@ -41,13 +41,15 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
     // Dilate and erode background
 
     cv::Mat backgroundMaskDilated;
-    int dilateSize = 3;
+    int dilateSize = 2;
     cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
-    cv::erode(backgroundMask, backgroundMaskDilated, dilateElement);
+
+    cv::dilate(backgroundMask, backgroundMaskDilated, dilateElement);
+    cv::erode(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
+
+    cv::erode(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
     cv::dilate(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
 
-    cv::dilate(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
-    cv::erode(backgroundMaskDilated, backgroundMaskDilated, dilateElement);
 
     // Find player's countour
 
@@ -65,7 +67,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
         if (rect.width > 40 && rect.height > 50){
 
             rect.y += rect.height * 0.2;
-            rect.height *= 0.3 * (rect.y / rect.height) / 3.6;
+            rect.height *= 0.34 * (rect.y / rect.height) / 3.6;
 
             if (rect.x < 0){
                 rect.x = 0;
@@ -134,8 +136,8 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
 //        cv::waitKey(4000);
     }
 
-//    cv::imshow("Output", backgroundMask1);
-//    cv::waitKey(1);
+//    cv::imshow("Output", backgroundMask);
+//    cv::waitKey(40000);
 
     Output* output = new Output(image);
 

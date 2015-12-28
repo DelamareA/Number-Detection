@@ -63,9 +63,9 @@ NumPos mostProbableNumber(cv::Mat image){
     cv::Mat jerseyFinal; // the image with the jersey appearing in white
     cvtColor(image, jerseyFinal, CV_BGR2GRAY);
 
-    double tL = 20;
-    double tA = 20;
-    double tB = 20;
+    double tL = 25;
+    double tA = 25;
+    double tB = 25;
 
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
@@ -132,7 +132,7 @@ NumPos mostProbableNumber(cv::Mat image){
                     cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
                     if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 0
-                            && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -8
+                            && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -6
                             && val[0] >= maxVoteL){
                         final.at<uchar>(y, x) = 255;
                     }
@@ -154,6 +154,10 @@ NumPos mostProbableNumber(cv::Mat image){
 //    cv::imshow("Output", colorSeg);
 //    cv::waitKey(40000);
 
+//    cv::imshow("Output", final);
+//    cv::waitKey(40000);
+
+
     // Number detection
 
     std::vector<std::vector<cv::Point> > contours;
@@ -172,9 +176,9 @@ NumPos mostProbableNumber(cv::Mat image){
             cv::swap(rotatedRect.size.width, rotatedRect.size.height);
         }
         double ratio = (double)rotatedRect.size.width / rotatedRect.size.height;
-        if (rotatedRect.size.width > jerseyRect.width * 0.15
+        if (rotatedRect.size.width > jerseyRect.width * 0.18
                 && rotatedRect.size.width < jerseyRect.width * 0.9
-                && rotatedRect.size.height > jerseyRect.height * 0.3
+                && rotatedRect.size.height > jerseyRect.height * 0.25
                 && rotatedRect.size.height < jerseyRect.height * 0.8
                 && ratio > 0.4 && ratio < 1.3
                 && contourArea(contours[i]) > image.rows * image.rows * 0.015){
@@ -314,6 +318,8 @@ int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect)
 int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     cv::RotatedRect rect = cv::minAreaRect(contour);
 
+    static int count = 0;
+
     float angle = rect.angle;
 
     cv::Size rectSize = rect.size;
@@ -331,6 +337,9 @@ int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
 
     cv::Mat resized;
     cv::resize(cropped, resized, cv::Size(36, 45));
+
+    imwrite(QString("digit-dataset/" + QString::number(count) + ".png").toStdString(), resized);
+    qDebug() << count++;
 
     cv::Mat skeleton = thinningGuoHall(resized);
     Skeleton ske(skeleton, resized);
