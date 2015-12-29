@@ -6,6 +6,8 @@
 #include "skeleton.h"
 #include "config.h"
 
+#define DATASET_COUNT 10
+
 struct NumPos {
     int number;
     cv::Point2i pos;
@@ -30,7 +32,7 @@ cv::Mat thinningGuoHall(cv::Mat image);
 void thinningGuoHallIteration(cv::Mat& im, int iter);
 
 void generateDataSet(QList<int> numbers, int countPerNumber, int width, int height, QString outputPath);
-void generateSVM(QString path);
+void generateSVM(QString path, int num1, int num2);
 
 NumPos mostProbableNumber(cv::Mat image);
 int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour);

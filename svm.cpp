@@ -117,43 +117,45 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 
 /**
  * @brief generateSVM Generates an SVM.
- * @param path The path of the svm folder. It must contain : "labels.txt" and a folder "dataset" where the digit images are.
+ * @param path The path of the svm folder.
+ * @param num1 The smallest of the two svm's numbers.
+ * @param num2 The biggest of the two svm's numbers.
  */
-void generateSVM(QString path){
-    QFile file(path + "labels.txt");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        qDebug() << "Cannot open " + path + "labels.txt";
-        return;
-    }
-
-    QTextStream in(&file);
-    QStringList labelsString = in.readAll().split(' ');
-
-    int count = labelsString[0].toInt();
-
+void generateSVM(QString path, int num1, int num2){
+    int count = DATASET_COUNT;
     int dim = VECTOR_DIMENSION;
 
     float labels[count];
     float* trainingData = new float[count * dim];
 
-    for (int i = 0; i < count; i++){
+    QList<double> vect;
+
+    for (int i = 0; i < 2 * count; i++){
         cv::Mat image;
-        image = cv::imread((path + "dataset/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_COLOR);
 
-        cv::Mat grayScaleImage;
-        cvtColor(image, grayScaleImage, CV_BGR2GRAY);
+        if (i < count){
+            image = cv::imread(("dataset/" + QString::number(num1) + "/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+            labels[i] = num1;
+        }
+        else {
+            image = cv::imread(("dataset/" + QString::number(num2) + "/" + QString::number(i-count) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+            labels[i] = num2;
+        }
 
-        cv::Mat skeleton = thinningGuoHall(grayScaleImage);
-        Skeleton ske(skeleton, grayScaleImage);
+        Skeleton ske(image);
 
-        cv::imwrite((path + "skeletons/" + QString::number(i) + ".png").toStdString(), skeleton);
+        qDebug() << i;
 
-        QList<double> vect = ske.vectorization();
 
-        labels[i] = labelsString[i+1].toInt();
+        vect = ske.vectorization();
+
+        qDebug() << i;
+
         for (int j = 0; j < dim; j++){
             trainingData[i * dim + j] = 2 * vect[j] - 1;
         }
+
+        vect.clear();
     }
     Mat labelsMat(count, 1, CV_32SC1, labels);
     Mat trainingDataMat(count, dim, CV_32FC1, trainingData);

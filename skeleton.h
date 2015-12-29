@@ -15,6 +15,9 @@
 #define PART_X 7
 #define PART_Y 10
 
+#define SMALL_SIZE_X 5
+#define SMALL_SIZE_Y 5
+
 #define END_COUNT 0
 
 #define JUNCTION_COUNT 0
@@ -23,11 +26,13 @@
 
 #define MASS_CENTER_COUNT 0
 
-#define TOTAL_COUNT 10000
+#define TOTAL_COUNT 0
 
-#define PARTS_COUNT 1
+#define PARTS_COUNT 0
 
-#define VECTOR_DIMENSION (2*END_COUNT + 2*JUNCTION_COUNT + 2*HOLE_COUNT + 2*MASS_CENTER_COUNT + TOTAL_COUNT + PART_X*PART_Y*PARTS_COUNT)
+#define SMALL_SIZE_COUNT 1
+
+#define VECTOR_DIMENSION (2*END_COUNT + 2*JUNCTION_COUNT + 2*HOLE_COUNT + 2*MASS_CENTER_COUNT + TOTAL_COUNT + PART_X*PART_Y*PARTS_COUNT + SMALL_SIZE_X*SMALL_SIZE_Y*SMALL_SIZE_COUNT)
 
 struct LabeledPoint {
     int label;
@@ -40,7 +45,7 @@ struct LabeledPoint {
 class Skeleton {
 
     public:
-        Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage);
+        Skeleton(cv::Mat normalImage);
 
         int mostProbableDigit();
         QList<double> vectorization();
@@ -48,6 +53,7 @@ class Skeleton {
         cv::Point2d getMassCenter(cv::Mat ske);
         double getCount(cv::Mat ske);
         void setParts(cv::Mat ske);
+        void setSmallImage(cv::Mat image);
 
         static double min(double a, double b);
         static double max(double a, double b);
@@ -64,6 +70,7 @@ class Skeleton {
         cv::Point2d massCenter;
         double total;
         double parts[PART_X][PART_Y];
+        double smallImage[SMALL_SIZE_X][SMALL_SIZE_Y];
 };
 
 #endif // SKELETON_H

@@ -8,7 +8,7 @@ int loadAndRun();
 int main(){
     // Below is the code to generate the datasets to train the svms
 
-    /*QList<int> all;
+    QList<int> all;
     for (int i = 0; i < 10; i++){
         all.push_back(i);
     }
@@ -16,13 +16,9 @@ int main(){
     for (int i = 0; i < 10; i++){
         for (int j = i+1; j < 10; j++){
             qDebug() << "Generating SVM " << i << "-" << j;
-            QList<int> numbers;
-            numbers.push_back(i);
-            numbers.push_back(j);
-            generateDataSet(numbers, 10, 36, 45, "svm/" + QString::number(i) + "-" + QString::number(j) + "/");
-            generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", M0);
+            generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", i, j);
         }
-    }*/
+    }
 
     return loadAndRun();
 }
@@ -102,6 +98,12 @@ int loadAndRun(){
                     bgs->apply(image, foregroundMask);
                 }
                 count++;
+
+                if (count % 2000 == 0 && Config::getIsMogUsed()){
+
+                    // each 2000 frames, create a new background
+                    bgs->getBackgroundImage(background);
+                }
             }
         }
 

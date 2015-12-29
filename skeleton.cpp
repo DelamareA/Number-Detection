@@ -3,10 +3,10 @@
 
 /**
  * @brief Skeleton::Skeleton Main constructor for a skeleton.
- * @param skeletonizedImage The skeletonized version of the image.
  * @param normalImage The image of the digit, in black and white.
  */
-Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
+Skeleton::Skeleton(cv::Mat normalImage){
+    cv::Mat skeletonizedImage = thinningGuoHall(normalImage);
     QVector<cv::Point2i> dummyJunctionList;
     QVector<LabeledPoint> removedPoints;
     QVector<int> survivors;
@@ -340,11 +340,11 @@ Skeleton::Skeleton(cv::Mat skeletonizedImage, cv::Mat normalImage){
     total = getCount(skeletonizedImage);
 
     setParts(skeletonizedImage);
+    setSmallImage(normalImage);
 
     listLineEnds = sort(listLineEnds);
     listHoles = sort(listHoles);
     listJunctions = sort(listJunctions);
-
 }
 
 /**
@@ -457,6 +457,15 @@ QList<double> Skeleton::vectorization() {
         }
     }
 
+    for (int i = 0; i < SMALL_SIZE_COUNT; i++){
+        for (int x = 0; x < SMALL_SIZE_X; x++){
+            for (int y = 0; y < SMALL_SIZE_Y; y++){
+                result[index] = smallImage[x][y];
+                index++;
+            }
+        }
+    }
+
     return result;
 }
 
@@ -536,6 +545,16 @@ void Skeleton::setParts(cv::Mat ske){
     for (int x = 0; x < PART_X; x++){
         for (int y = 0; y < PART_Y; y++){
             parts[x][y] = min(parts[x][y] * 20, 1.0);
+        }
+    }
+}
+
+void Skeleton::setSmallImage(cv::Mat image){
+    cv::Mat small;
+    cv::resize(image, small, cv::Size(SMALL_SIZE_X, SMALL_SIZE_Y));
+    for (int x = 0; x < SMALL_SIZE_X; x++){
+        for (int y = 0; y < SMALL_SIZE_Y; y++){
+            smallImage[x][y] = small.at<uchar>(y,x) / 255.0;
         }
     }
 }

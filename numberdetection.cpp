@@ -151,12 +151,11 @@ NumPos mostProbableNumber(cv::Mat image){
         cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
     }
 
-    cv::imshow("Output", colorSeg);
-    cv::waitKey(40000);
+//    cv::imshow("Output", colorSeg);
+//    cv::waitKey(40000);
 
-    cv::imshow("Output", final);
-    cv::waitKey(40000);
-
+//    cv::imshow("Output", final);
+//    cv::waitKey(40000);
 
     // Number detection
 
@@ -390,8 +389,7 @@ int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     imwrite(QString("digit-dataset/" + QString::number(count) + ".png").toStdString(), resized);
     qDebug() << count++;
 
-    cv::Mat skeleton = thinningGuoHall(resized);
-    Skeleton ske(skeleton, resized);
+    Skeleton ske(resized);
 
     return ske.mostProbableDigit();
 }
