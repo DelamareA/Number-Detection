@@ -15,8 +15,8 @@
 #define PART_X 7
 #define PART_Y 10
 
-#define SMALL_SIZE_X 5
-#define SMALL_SIZE_Y 5
+#define SMALL_SIZE_X 9
+#define SMALL_SIZE_Y 12
 
 #define END_COUNT 0
 

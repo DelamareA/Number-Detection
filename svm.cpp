@@ -123,14 +123,13 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
  */
 void generateSVM(QString path, int num1, int num2){
     int count = DATASET_COUNT;
+    int totalCount = 2 * count;
     int dim = VECTOR_DIMENSION;
 
-    float labels[count];
-    float* trainingData = new float[count * dim];
+    float labels[totalCount];
+    float* trainingData = new float[totalCount * dim];
 
-    QList<double> vect;
-
-    for (int i = 0; i < 2 * count; i++){
+    for (int i = 0; i < totalCount; i++){
         cv::Mat image;
 
         if (i < count){
@@ -144,28 +143,22 @@ void generateSVM(QString path, int num1, int num2){
 
         Skeleton ske(image);
 
-        qDebug() << i;
-
-
-        vect = ske.vectorization();
-
-        qDebug() << i;
+        QList<double> vect = ske.vectorization();
 
         for (int j = 0; j < dim; j++){
             trainingData[i * dim + j] = 2 * vect[j] - 1;
         }
-
-        vect.clear();
     }
-    Mat labelsMat(count, 1, CV_32SC1, labels);
-    Mat trainingDataMat(count, dim, CV_32FC1, trainingData);
+    Mat labelsMat(totalCount, 1, CV_32SC1, labels);
+    Mat trainingDataMat(totalCount, dim, CV_32FC1, trainingData);
 
     Ptr<ml::SVM> svm = ml::SVM::create();
 
     Ptr<TrainData> data = TrainData::create(trainingDataMat, ROW_SAMPLE, labelsMat);
 
     svm->setKernel(cv::ml::SVM::RBF);
-    svm->setGamma(3);
+    svm->setGamma(1);
+    svm->setC(100);
     svm->trainAuto(data);
     svm->save((path + "svm.xml").toStdString());
 
