@@ -7,7 +7,7 @@
 #include <QSet>
 #include <opencv2/opencv.hpp>
 
-#define CONFIG_LINES_COUNT 9
+#define CONFIG_LINES_COUNT 10
 
 typedef cv::Ptr<cv::ml::SVM>* SVMs;
 
@@ -19,6 +19,7 @@ class Config {
 
         static void setConfigFromFile(QString path);
         static bool getIsVideo();
+        static bool getIsMogUsed();
         static QString getImagePath();
         static QString getVideoPath();
         static QString getBackgroundPath();
@@ -32,6 +33,7 @@ class Config {
     private:
         Config();
         static bool isVideo;
+        static bool isMogUsed;
         static QString imagePath;
         static QString videoPath;
         static QString backgroundPath;

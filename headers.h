@@ -11,7 +11,9 @@ struct NumPos {
     cv::Point2i pos;
 };
 
-Output* frameProcess(cv::Mat image, cv::Mat background);
+enum FRAME_MODE {NORMAL, MOG};
+
+Output* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundMask, FRAME_MODE mode);
 
 int colorDistance(cv::Vec3b c1, cv::Vec3b c2);
 

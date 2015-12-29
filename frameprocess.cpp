@@ -9,9 +9,11 @@
  * @brief frameProcess Main function that extract numbers from a frame.
  * @param image The image where the numbers are.
  * @param background The background image.
- * @return An Output containing all info concerning this frame.
+ * @param foregroundMask The optional foreground mask. Only used if mode = MOG
+ * @param mode The mode of the background subtraction.
+ * @return  An Output containing all info concerning this frame.
  */
-Output* frameProcess(cv::Mat image, cv::Mat background){
+Output* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundMask, FRAME_MODE mode){
     cv::Mat blurredImage;
     cv::Mat blurredBackground;
     GaussianBlur(background, blurredBackground, cv::Size(3, 3), 0, 0);
@@ -27,13 +29,17 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
     for (int y = 0; y < image.rows; y++){
         cv::Vec3b* rowImage = blurredImage.ptr<cv::Vec3b>(y);
         cv::Vec3b* rowBackground = blurredBackground.ptr<cv::Vec3b>(y);
+        uchar* rowMask = backgroundMask.ptr<uchar>(y);
         for (int x = 0; x < image.cols; x++){
 
-            if (y < image.rows / 2.5 || colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance   ){
-                backgroundMask.at<uchar>(y, x) = 0;
+            if (y < image.rows / 2.3 || colorDistance(rowBackground[x], rowImage[x]) < maxBackgroundColorDistance){
+                rowMask[x] = 0;
+            }
+            else if (mode == MOG && foregroundMask.at<uchar>(y,x) == 127){
+                rowMask[x] = 0;
             }
             else {
-                backgroundMask.at<uchar>(y, x) = 255;
+                rowMask[x] = 255;
             }
         }
     }
@@ -41,7 +47,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
     // Dilate and erode background
 
     cv::Mat backgroundMaskDilated;
-    int dilateSize = 2;
+    int dilateSize = 3;
     cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2*dilateSize + 1, 2*dilateSize + 1), cv::Point(dilateSize, dilateSize) );
 
     cv::dilate(backgroundMask, backgroundMaskDilated, dilateElement);
@@ -64,8 +70,9 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
 
     for (unsigned int i = 0; i < backgroundContours.size(); i++){
         cv::Rect rect = minAreaRect(backgroundContours[i]).boundingRect();
-        if (rect.width > 40 && rect.height > 50){
+        if (rect.width > 40 && rect.height > 60){
 
+            // Cropping of the head and the legs
             rect.y += rect.height * 0.2;
             rect.height *= 0.34 * (rect.y / rect.height) / 3.6;
 
@@ -136,16 +143,12 @@ Output* frameProcess(cv::Mat image, cv::Mat background){
 //        cv::waitKey(4000);
     }
 
-//    cv::imshow("Output", backgroundMask);
+//    cv::imshow("Output", backgroundMaskDilated);
 //    cv::waitKey(40000);
 
     Output* output = new Output(image);
 
-    QList<cv::Mat> listPlayerImagesNumbers;
-
     for (int i = 0; i < listPlayerImages.size(); i++){
-        listPlayerImagesNumbers.push_back(listPlayerImages[i].clone());
-
         NumPos num = mostProbableNumber(listPlayerImages[i].clone());
 
         if (num.number != -1){
@@ -232,7 +235,7 @@ cv::Mat extractBackgroundFromVideo(QString fileName, int maxFrames){
         int frameCount = 0;
 
         while(video.read(frame) && frameCount < maxFrames){
-            mog->apply(frame, foreground, 0.05);
+            mog->apply(frame, foreground);
             //threshold(foreground, foreground ,120,255, cv::THRESH_BINARY_INV);
             imshow(fileName.toStdString(), foreground);
 

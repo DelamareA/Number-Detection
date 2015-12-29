@@ -56,8 +56,12 @@ int loadAndRun(){
             return -1;
         }
 
+        cv::Ptr<cv::BackgroundSubtractor> bgs = cv::createBackgroundSubtractorMOG2();
+        cv::Mat foregroundMask;
+
         cv::Mat image;
         inputVideo >> image;
+        bgs->apply(image, foregroundMask);
         int count = 0;
         int frameCount = 0;
 
@@ -77,7 +81,13 @@ int loadAndRun(){
 
             imwrite(QString("tempframes/" + QString::number(frameCount)+  ".png").toStdString(), image);
 
-            out = frameProcess(image, background);
+            if (count < 20 || !Config::getIsMogUsed()){
+                out = frameProcess(image, background, foregroundMask, NORMAL);
+            }
+            else {
+                out = frameProcess(image, background, foregroundMask, MOG);
+            }
+
             outputVideo << out->getImage();
             frameCount++;
             outputText += out->toString();
@@ -88,6 +98,9 @@ int loadAndRun(){
 
             for (int i = 0; i < inputVideo.get(CV_CAP_PROP_FPS)/4; i++){
                 inputVideo >> image;
+                if (!image.empty() && Config::getIsMogUsed()){
+                    bgs->apply(image, foregroundMask);
+                }
                 count++;
             }
         }
@@ -112,7 +125,7 @@ int loadAndRun(){
             qDebug() << "Image and background have not the same size";
         }
 
-        out = frameProcess(image, background);
+        out = frameProcess(image, background, cv::Mat(), NORMAL);
 
         cv::namedWindow("Output");
         cv::imshow("Output", out->getImage());

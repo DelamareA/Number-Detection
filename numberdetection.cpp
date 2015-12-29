@@ -63,9 +63,9 @@ NumPos mostProbableNumber(cv::Mat image){
     cv::Mat jerseyFinal; // the image with the jersey appearing in white
     cvtColor(image, jerseyFinal, CV_BGR2GRAY);
 
-    double tL = 25;
-    double tA = 25;
-    double tB = 25;
+    double tL = 26;
+    double tA = 20;
+    double tB = 20;
 
     for (int x = 0; x < image.cols; x++){
         for (int y = 0; y < image.rows; y++){
@@ -132,7 +132,7 @@ NumPos mostProbableNumber(cv::Mat image){
                     cv::Vec3b val = colorSegLab.at<cv::Vec3b>(y, x);
 
                     if (pointPolygonTest(convexContour, cv::Point2f(x,y), true) >= 0
-                            && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -6
+                            && pointPolygonTest(trueJerseyContour, cv::Point2f(x,y), true) >= -8
                             && val[0] >= maxVoteL){
                         final.at<uchar>(y, x) = 255;
                     }
@@ -151,11 +151,11 @@ NumPos mostProbableNumber(cv::Mat image){
         cv::drawContours(colorSeg, temp, 0, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
     }
 
-//    cv::imshow("Output", colorSeg);
-//    cv::waitKey(40000);
+    cv::imshow("Output", colorSeg);
+    cv::waitKey(40000);
 
-//    cv::imshow("Output", final);
-//    cv::waitKey(40000);
+    cv::imshow("Output", final);
+    cv::waitKey(40000);
 
 
     // Number detection
@@ -167,6 +167,9 @@ NumPos mostProbableNumber(cv::Mat image){
 
     QVector<cv::Rect> filteredRects;
     QVector<std::vector<cv::Point> > filteredContours;
+
+    QVector<cv::Rect> filteredRectsMaybe;
+    QVector<std::vector<cv::Point> > filteredContoursMaybe;
 
     for (unsigned int i = 0; i < contours.size(); i++){
         cv::Rect rect = minAreaRect(contours[i]).boundingRect();
@@ -180,7 +183,7 @@ NumPos mostProbableNumber(cv::Mat image){
                 && rotatedRect.size.width < jerseyRect.width * 0.9
                 && rotatedRect.size.height > jerseyRect.height * 0.25
                 && rotatedRect.size.height < jerseyRect.height * 0.8
-                && ratio > 0.4 && ratio < 1.3
+                && ratio > 0.4
                 && contourArea(contours[i]) > image.rows * image.rows * 0.015){
 
             if (rect.x < 0){
@@ -199,6 +202,48 @@ NumPos mostProbableNumber(cv::Mat image){
 
             filteredRects.push_back(rect);
             filteredContours.push_back(contours[i]);
+        }
+
+        if (rotatedRect.size.width > jerseyRect.width * 0.12
+                && rotatedRect.size.width < jerseyRect.width * 0.9
+                && rotatedRect.size.height > jerseyRect.height * 0.25
+                && rotatedRect.size.height < jerseyRect.height * 0.8
+                && ratio > 0.325
+                && contourArea(contours[i]) > image.rows * image.rows * 0.01){
+
+            if (rect.x < 0){
+                rect.x = 0;
+            }
+            if (rect.y < 0){
+                rect.y = 0;
+            }
+
+            if (rect.x + rect.width > final.cols){
+                rect.width = final.cols - rect.x;
+            }
+            if (rect.y + rect.height > final.rows){
+                rect.height = final.rows - rect.y;
+            }
+
+            filteredRectsMaybe.push_back(rect);
+            filteredContoursMaybe.push_back(contours[i]);
+        }
+    }
+
+    if (filteredRects.size() == 1){
+        int biggestMaybe = -1;
+        int maxArea = 0;
+
+        for (int i = 0; i < filteredContoursMaybe.size(); i++){
+            if (contourArea(filteredContoursMaybe[i]) > maxArea){
+                maxArea = contourArea(filteredContoursMaybe[i]);
+                biggestMaybe = -1;
+            }
+        }
+
+        if (biggestMaybe != -1 && filteredRectsMaybe[biggestMaybe].x < filteredRects[0].x){
+            filteredRects.push_back(filteredRectsMaybe[biggestMaybe]);
+            filteredContoursMaybe.push_back(filteredContours[biggestMaybe]);
         }
     }
 
@@ -263,12 +308,16 @@ NumPos mostProbableNumber(cv::Mat image){
             result.pos.y = finalRects[0].y + finalRects[0].height/2;
             return result;
         }
-        else {
-            // Return the 2nd digit (arbitrary)
-
+        else if (Config::getNumbersOnField().contains(digit2)){
             result.number = digit2;
             result.pos.x = finalRects[1].x + finalRects[1].width/2;
             result.pos.y = finalRects[1].y + finalRects[1].height/2;
+            return result;
+        }
+        else {
+            result.number = digit1;
+            result.pos.x = finalRects[0].x + finalRects[0].width/2;
+            result.pos.y = finalRects[0].y + finalRects[0].height/2;
             return result;
         }
     }

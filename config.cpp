@@ -2,6 +2,7 @@
 #include "config.h"
 
 bool Config::isVideo = false;
+bool Config::isMogUsed = false;
 QString Config::imagePath = "";
 QString Config::videoPath = "";
 QString Config::backgroundPath = "";
@@ -35,6 +36,9 @@ void Config::setConfigFromFile(QString path){
 
             if (l[0] == "isVideo"){
                 Config::isVideo = l[1].toInt();
+            }
+            else if (l[0] == "isMogUsed"){
+                Config::isMogUsed = l[1].toInt();
             }
             else if (l[0] == "imagePath"){
                 Config::imagePath = l[1];
@@ -104,6 +108,10 @@ void Config::setConfigFromFile(QString path){
 
 bool Config::getIsVideo(){
     return Config::isVideo;
+}
+
+bool Config::getIsMogUsed(){
+    return Config::isMogUsed;
 }
 
 QString Config::getImagePath(){
