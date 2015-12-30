@@ -8,15 +8,12 @@ int loadAndRun();
 int main(){
     // Below is the code to generate the datasets to train the svms
 
-    QList<int> all;
     for (int i = 0; i < 10; i++){
-        all.push_back(i);
-    }
-
-    for (int i = 0; i < 10; i++){
+        qDebug() << "Generating SVM " << i << "- all";
+        generateSVM("svm/" + QString::number(i) + "-all/", i, -1, 0);
         for (int j = i+1; j < 10; j++){
             qDebug() << "Generating SVM " << i << "-" << j;
-            generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", i, j);
+            generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", i, j, 1);
         }
     }
 
@@ -45,7 +42,7 @@ int loadAndRun(){
         cv::Size size = cv::Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH), (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));
 
         cv::VideoWriter outputVideo;
-        outputVideo.open(Config::getOutputVideoPath().toStdString(), -1, 1, size, true);
+        outputVideo.open(Config::getOutputVideoPath().toStdString(), -1, inputVideo.get(CV_CAP_PROP_FPS), size, true);
 
         if (!outputVideo.isOpened()){
             qDebug() << "Could not open video output";
@@ -92,7 +89,7 @@ int loadAndRun(){
 
             qDebug() << "End frame : " << frameCount-1;
 
-            for (int i = 0; i < inputVideo.get(CV_CAP_PROP_FPS)/4; i++){
+            for (int i = 0; i < inputVideo.get(CV_CAP_PROP_FPS)/inputVideo.get(CV_CAP_PROP_FPS); i++){
                 inputVideo >> image;
                 if (!image.empty() && Config::getIsMogUsed()){
                     bgs->apply(image, foregroundMask);

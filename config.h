@@ -29,6 +29,7 @@ class Config {
         static QSet<int> getDigitsOnField();
         static QSet<int> getNumbersOnField();
         static SVMs getSVMs();
+        static SVMs getPairSVMs();
 
     private:
         Config();
@@ -43,6 +44,7 @@ class Config {
         static QSet<int> digitsOnField;
         static QSet<int> numbersOnField;
         static SVMs machines;
+        static SVMs machinesPair;
 };
 
 #endif // CONFIGURATION_H

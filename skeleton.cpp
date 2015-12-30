@@ -366,6 +366,30 @@ int Skeleton::mostProbableDigit(){
 
     cv::Mat sampleMat(1, dim, CV_32FC1, sampleData);
 
+    // One against all
+
+    QList<int> electedDigits;
+
+    for (int i = 0; i < 10; i++){
+        if (digitsOnField.contains(i)) {
+            float response = Config::getSVMs()[i]->predict(sampleMat);
+
+            if (response == 0.0){
+                electedDigits.push_back(i);
+            }
+        }
+    }
+
+    if (electedDigits.size() == 1){
+        qDebug() << "Only elected" << electedDigits[0];
+        return electedDigits[0];
+    }
+    else {
+        qDebug() << "Elected" << electedDigits.size();
+    }
+
+    // One against one
+
     int maxVote = 0;
     int intMaxVote = -1;
 
@@ -373,7 +397,7 @@ int Skeleton::mostProbableDigit(){
         int vote = 0;
         for (int j = 0; j < 10; j++){
             if (i != j && digitsOnField.contains(i) && digitsOnField.contains(j)) {
-                float response = Config::getSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
+                float response = Config::getPairSVMs()[min(i,j) * 10 + max(i,j)]->predict(sampleMat);
 
                 if ((response == 0.0 && i == min(i,j)) || (response == 1.0 && i == max(i,j))){
                     vote++;

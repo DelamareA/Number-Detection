@@ -2,7 +2,7 @@
 #define FUNCTIONS
 
 #include <opencv2/core.hpp>
-#include "output.h"
+#include "frameoutput.h"
 #include "skeleton.h"
 #include "config.h"
 
@@ -32,7 +32,7 @@ cv::Mat thinningGuoHall(cv::Mat image);
 void thinningGuoHallIteration(cv::Mat& im, int iter);
 
 void generateDataSet(QList<int> numbers, int countPerNumber, int width, int height, QString outputPath);
-void generateSVM(QString path, int num1, int num2);
+void generateSVM(QString path, int num1, int num2, int mode);
 
 NumPos mostProbableNumber(cv::Mat image);
 int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour);

@@ -1,4 +1,4 @@
-#include "output.h"
+#include "frameoutput.h"
 
 Output::Output(cv::Mat image){
     //cvtColor(image, baseImage, CV_GRAY2BGR); // Uncomment this line if the image is in black and white.

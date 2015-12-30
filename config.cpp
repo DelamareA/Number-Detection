@@ -12,6 +12,7 @@ QString Config::outputTextPath = "";
 QSet<int> Config::digitsOnField;
 QSet<int> Config::numbersOnField;
 SVMs Config::machines;
+SVMs Config::machinesPair;
 
 Config::Config(){
 }
@@ -82,11 +83,13 @@ void Config::setConfigFromFile(QString path){
                 }
             }
             else if (l[0] == "svmsPath"){
-                Config::machines = new cv::Ptr<cv::ml::SVM>[10 * 10];
+                Config::machines = new cv::Ptr<cv::ml::SVM>[10];
+                Config::machinesPair = new cv::Ptr<cv::ml::SVM>[10 * 10];
 
                 for (int i = 0; i < 10; i++){
+                    Config::machines[i] = cv::ml::SVM::load<cv::ml::SVM>(QString(l[1] + "/" + QString::number(i) + "-all/svm.xml").toStdString());
                     for (int j = i+1; j < 10; j++){
-                        Config::machines[i * 10 + j] = cv::ml::SVM::load<cv::ml::SVM>(QString(l[1] + "/" + QString::number(i) + "-" + QString::number(j) + "/svm.xml").toStdString());
+                        Config::machinesPair[i * 10 + j] = cv::ml::SVM::load<cv::ml::SVM>(QString(l[1] + "/" + QString::number(i) + "-" + QString::number(j) + "/svm.xml").toStdString());
                     }
                 }
             }
@@ -148,4 +151,8 @@ QSet<int> Config::getNumbersOnField(){
 
 SVMs Config::getSVMs(){
     return Config::machines;
+}
+
+SVMs Config::getPairSVMs(){
+    return Config::machinesPair;
 }

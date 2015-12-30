@@ -118,12 +118,16 @@ void generateDataSet(QList<int> numbers, int countPerNumber, int width, int heig
 /**
  * @brief generateSVM Generates an SVM.
  * @param path The path of the svm folder.
- * @param num1 The smallest of the two svm's numbers.
- * @param num2 The biggest of the two svm's numbers.
+ * @param num The number of the svm.
  */
-void generateSVM(QString path, int num1, int num2){
+void generateSVM(QString path, int num1, int num2, int mode){
     int count = DATASET_COUNT;
-    int totalCount = 2 * count;
+    int totalCount = 10 * count;
+
+    if (mode == 1){
+        totalCount = 2 * count;
+    }
+
     int dim = VECTOR_DIMENSION;
 
     float labels[totalCount];
@@ -132,13 +136,25 @@ void generateSVM(QString path, int num1, int num2){
     for (int i = 0; i < totalCount; i++){
         cv::Mat image;
 
-        if (i < count){
-            image = cv::imread(("dataset/" + QString::number(num1) + "/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
-            labels[i] = num1;
+        if (mode == 0){
+            if (i / 10 == num1){
+                image = cv::imread(("dataset/" + QString::number(num1) + "/" + QString::number(i%10) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+                labels[i] = num1;
+            }
+            else {
+                image = cv::imread(("dataset/" + QString::number(i/10) + "/" + QString::number(i%10) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+                labels[i] = num1+1;
+            }
         }
         else {
-            image = cv::imread(("dataset/" + QString::number(num2) + "/" + QString::number(i-count) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
-            labels[i] = num2;
+            if (i < count){
+                image = cv::imread(("dataset/" + QString::number(num1) + "/" + QString::number(i) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+                labels[i] = num1;
+            }
+            else {
+                image = cv::imread(("dataset/" + QString::number(num2) + "/" + QString::number(i-count) + ".png").toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+                labels[i] = num2;
+            }
         }
 
         Skeleton ske(image);
@@ -146,7 +162,7 @@ void generateSVM(QString path, int num1, int num2){
         QList<double> vect = ske.vectorization();
 
         for (int j = 0; j < dim; j++){
-            trainingData[i * dim + j] = 2 * vect[j] - 1;
+            trainingData[i * dim + j] = vect[j];
         }
     }
     Mat labelsMat(totalCount, 1, CV_32SC1, labels);
@@ -157,8 +173,8 @@ void generateSVM(QString path, int num1, int num2){
     Ptr<TrainData> data = TrainData::create(trainingDataMat, ROW_SAMPLE, labelsMat);
 
     svm->setKernel(cv::ml::SVM::RBF);
-    svm->setGamma(1);
-    svm->setC(100);
+    svm->setGamma(100);
+    svm->setC(1000);
     svm->trainAuto(data);
     svm->save((path + "svm.xml").toStdString());
 
