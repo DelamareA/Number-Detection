@@ -387,11 +387,14 @@ int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     cv::resize(cropped, resized, cv::Size(36, 45));
 
     imwrite(QString("digit-dataset/" + QString::number(count) + ".png").toStdString(), resized);
-    qDebug() << count++;
 
     Skeleton ske(resized);
 
-    return ske.mostProbableDigit();
+    int result = ske.mostProbableDigit();
+
+    //qDebug() << count++ << " -> " << result;
+
+    return result;
 }
 
 /**

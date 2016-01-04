@@ -9,15 +9,18 @@
 #define MERGE_DISTANCE_Y 20
 
 /**
- * @brief The Output class represents the output of the processing of a frame,
+ * @brief The FrameOutput class represents the output of the processing of a frame,
  * containing the detected numbers and their position.
  */
-class Output{
+class FrameOutput{
 
     public:
-        Output(cv::Mat);
+        FrameOutput(cv::Mat);
         cv::Mat getImage();
         void addData(unsigned int x, unsigned int y, unsigned int num);
+        void removeData(unsigned int x, unsigned int y, unsigned int maxDistance);
+        bool isDataClose(unsigned int x, unsigned int y, unsigned int maxDistance);
+        QList<cv::Point2i> getAllData();
         QString toString();
 
     private:

@@ -8,14 +8,14 @@ int loadAndRun();
 int main(){
     // Below is the code to generate the datasets to train the svms
 
-    for (int i = 0; i < 10; i++){
+    /*for (int i = 0; i < 10; i++){
         qDebug() << "Generating SVM " << i << "- all";
         generateSVM("svm/" + QString::number(i) + "-all/", i, -1, 0);
         for (int j = i+1; j < 10; j++){
             qDebug() << "Generating SVM " << i << "-" << j;
             generateSVM("svm/" + QString::number(i) + "-" + QString::number(j) + "/", i, j, 1);
         }
-    }
+    }*/
 
     return loadAndRun();
 }
@@ -28,7 +28,9 @@ int loadAndRun(){
     Config::setConfigFromFile("config.txt");
     cv::Mat background = cv::imread(Config::getBackgroundPath().toStdString());
 
-    Output* out = 0;
+    FrameOutput* out = 0;
+    FrameOutput* oldOut = 0;
+    FrameOutput* oldestOut = 0;
 
 //    runOnDataSet();
 
@@ -42,7 +44,7 @@ int loadAndRun(){
         cv::Size size = cv::Size((int) inputVideo.get(CV_CAP_PROP_FRAME_WIDTH), (int) inputVideo.get(CV_CAP_PROP_FRAME_HEIGHT));
 
         cv::VideoWriter outputVideo;
-        outputVideo.open(Config::getOutputVideoPath().toStdString(), -1, inputVideo.get(CV_CAP_PROP_FPS), size, true);
+        outputVideo.open(Config::getOutputVideoPath().toStdString(), -1, 1, size, true);
 
         if (!outputVideo.isOpened()){
             qDebug() << "Could not open video output";
@@ -74,6 +76,15 @@ int loadAndRun(){
 
             imwrite(QString("tempframes/" + QString::number(frameCount)+  ".png").toStdString(), image);
 
+            if (Config::getIsPostProcessActivated()){
+                if (oldestOut != 0){
+                    delete oldestOut;
+                }
+
+                oldestOut = oldOut;
+                oldOut = out;
+            }
+
             if (count < 20 || !Config::getIsMogUsed()){
                 out = frameProcess(image, background, foregroundMask, NORMAL);
             }
@@ -81,15 +92,38 @@ int loadAndRun(){
                 out = frameProcess(image, background, foregroundMask, MOG);
             }
 
-            outputVideo << out->getImage();
-            frameCount++;
-            outputText += out->toString();
+            if (Config::getIsPostProcessActivated()){
+                if (oldestOut != 0 && oldOut != 0){
+                    QList<cv::Point2i> datas = oldOut->getAllData();
 
-            delete out;
+                    for (int j = 0; j < datas.size(); j++){
+                        if (!oldestOut->isDataClose(datas[j].x, datas[j].y, 50) && !out->isDataClose(datas[j].x, datas[j].y, 50)){
+                            oldOut->removeData(datas[j].x, datas[j].y, 1);
+                            qDebug() << "Data removed at " << datas[j].x << datas[j].y;
+                        }
+                    }
+
+                    outputVideo << oldOut->getImage();
+                    outputText += oldOut->toString();
+                }
+                else if (oldOut == 0){ // first frame
+
+                    outputVideo << out->getImage();
+                    outputText += out->toString();
+                }
+            }
+            else {
+                outputVideo << out->getImage();
+                outputText += out->toString();
+
+                delete out;
+            }
+
+            frameCount++;
 
             qDebug() << "End frame : " << frameCount-1;
 
-            for (int i = 0; i < inputVideo.get(CV_CAP_PROP_FPS)/inputVideo.get(CV_CAP_PROP_FPS); i++){
+            for (int i = 0; i < inputVideo.get(CV_CAP_PROP_FPS)/4; i++){
                 inputVideo >> image;
                 if (!image.empty() && Config::getIsMogUsed()){
                     bgs->apply(image, foregroundMask);
@@ -102,6 +136,11 @@ int loadAndRun(){
                     bgs->getBackgroundImage(background);
                 }
             }
+        }
+
+        if (Config::getIsPostProcessActivated()){
+            outputVideo << out->getImage();
+            outputText += out->toString();
         }
 
         outputText = QString::number(width) + '@' + QString::number(height) + '@' + QString::number(frameCount) + "@" + outputText + "@";

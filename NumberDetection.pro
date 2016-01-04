@@ -18,16 +18,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     numberdetection.cpp \
-    output.cpp \
     skeleton.cpp \
     svm.cpp \
     config.cpp \
-    frameprocess.cpp
+    frameprocess.cpp \
+    frameoutput.cpp
 
 HEADERS  += \
-    output.h \
     skeleton.h \
     config.h \
-    headers.h
+    headers.h \
+    frameoutput.h
 
 FORMS    +=

@@ -3,6 +3,7 @@
 
 bool Config::isVideo = false;
 bool Config::isMogUsed = false;
+bool Config::isPostProcessActivated = false;
 QString Config::imagePath = "";
 QString Config::videoPath = "";
 QString Config::backgroundPath = "";
@@ -40,6 +41,9 @@ void Config::setConfigFromFile(QString path){
             }
             else if (l[0] == "isMogUsed"){
                 Config::isMogUsed = l[1].toInt();
+            }
+            else if (l[0] == "isPostProcessActivated"){
+                Config::isPostProcessActivated = l[1].toInt();
             }
             else if (l[0] == "imagePath"){
                 Config::imagePath = l[1];
@@ -115,6 +119,10 @@ bool Config::getIsVideo(){
 
 bool Config::getIsMogUsed(){
     return Config::isMogUsed;
+}
+
+bool Config::getIsPostProcessActivated(){
+    return Config::isPostProcessActivated;
 }
 
 QString Config::getImagePath(){

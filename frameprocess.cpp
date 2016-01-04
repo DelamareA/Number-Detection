@@ -11,9 +11,9 @@
  * @param background The background image.
  * @param foregroundMask The optional foreground mask. Only used if mode = MOG
  * @param mode The mode of the background subtraction.
- * @return  An Output containing all info concerning this frame.
+ * @return  A FrameOutput containing all info concerning this frame.
  */
-Output* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundMask, FRAME_MODE mode){
+FrameOutput* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundMask, FRAME_MODE mode){
     cv::Mat blurredImage;
     cv::Mat blurredBackground;
     GaussianBlur(background, blurredBackground, cv::Size(3, 3), 0, 0);
@@ -146,7 +146,7 @@ Output* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundMask, 
 //    cv::imshow("Output", backgroundMaskDilated);
 //    cv::waitKey(40000);
 
-    Output* output = new Output(image);
+    FrameOutput* output = new FrameOutput(image);
 
     for (int i = 0; i < listPlayerImages.size(); i++){
         NumPos num = mostProbableNumber(listPlayerImages[i].clone());
