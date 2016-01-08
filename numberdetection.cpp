@@ -366,8 +366,6 @@ int digitHelper(cv::Mat bigImage, std::vector<cv::Point> contour, cv::Rect rect)
 int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     cv::RotatedRect rect = cv::minAreaRect(contour);
 
-    static int count = 0;
-
     float angle = rect.angle;
 
     cv::Size rectSize = rect.size;
@@ -385,8 +383,6 @@ int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
 
     cv::Mat resized;
     cv::resize(cropped, resized, cv::Size(36, 45));
-
-    imwrite(QString("digit-dataset/" + QString::number(count) + ".png").toStdString(), resized);
 
     Skeleton ske(resized);
 

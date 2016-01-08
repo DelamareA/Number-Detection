@@ -32,8 +32,6 @@ int loadAndRun(){
     FrameOutput* oldOut = 0;
     FrameOutput* oldestOut = 0;
 
-//    runOnDataSet();
-
     if (Config::getIsVideo()){
         cv::VideoCapture inputVideo(Config::getVideoPath().toStdString());
         if (!inputVideo.isOpened()){
@@ -73,8 +71,6 @@ int loadAndRun(){
             height = image.rows;
 
             qDebug() << "Start frame : " << frameCount;
-
-            imwrite(QString("tempframes/" + QString::number(frameCount)+  ".png").toStdString(), image);
 
             if (Config::getIsPostProcessActivated()){
                 if (oldestOut != 0){

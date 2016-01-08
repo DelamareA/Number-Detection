@@ -381,12 +381,8 @@ int Skeleton::mostProbableDigit(){
     }
 
     if (electedDigits.size() == 1){
-        //qDebug() << "Only elected" << electedDigits[0];
         return electedDigits[0];
-    }
-    else {
-        //qDebug() << "Elected" << electedDigits.size();
-    }
+    }   
 
     // One against one
 
@@ -404,8 +400,6 @@ int Skeleton::mostProbableDigit(){
                 }
             }
         }
-
-        //qDebug() << i << ": " << vote;
 
         if (vote > maxVote){
             maxVote = vote;

@@ -104,7 +104,7 @@ FrameOutput* frameProcess(cv::Mat image, cv::Mat background, cv::Mat foregroundM
 
     // just to display the image
 
-    /*cv::Mat backgroundFilteredImage = backgroundMask2.clone();
+    /*cv::Mat backgroundFilteredImage = backgroundMaskDilated.clone();
     cv::Mat backgroundFilteredImageColor = image.clone();
 
 
