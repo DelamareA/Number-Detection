@@ -58,8 +58,6 @@ NumPos mostProbableNumber(cv::Mat image){
         }
     }
 
-    //qDebug() << "Value of the dominant color : " << maxVoteL * 100 / 255 << maxVoteA - 128 << maxVoteB - 128;
-
     cv::Mat jerseyFinal; // the image with the jersey appearing in white
     cvtColor(image, jerseyFinal, CV_BGR2GRAY);
 
@@ -387,8 +385,6 @@ int mostProbableDigit(cv::Mat digitImage, std::vector<cv::Point> contour){
     Skeleton ske(resized);
 
     int result = ske.mostProbableDigit();
-
-    //qDebug() << count++ << " -> " << result;
 
     return result;
 }
